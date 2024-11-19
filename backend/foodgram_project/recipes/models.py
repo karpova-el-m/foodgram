@@ -2,7 +2,11 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from foodgram_project.constants import MAX_LENGTH, MAX_TITLE_LENGTH
+from foodgram_project.constants import (
+    MAX_LENGTH,
+    MAX_TITLE_LENGTH,
+    MEASUREMENT_UNIT_CHOICES
+)
 
 User = get_user_model()
 
@@ -22,6 +26,10 @@ class Tag(models.Model):
         ),
     )
 
+    class Meta:
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
+
     def __str__(self):
         return self.name
 
@@ -33,7 +41,8 @@ class Ingredient(models.Model):
         max_length=MAX_LENGTH
     )
     measurement_unit = models.CharField(
-        max_length=MAX_LENGTH,
+        max_length=2,
+        choices=MEASUREMENT_UNIT_CHOICES,
         verbose_name='Единица измерения'
     )
 
@@ -51,7 +60,7 @@ class Recipe(models.Model):
         verbose_name='Название'
     )
     text = models.TextField(verbose_name='Описание рецепта')
-    autor = models.ForeignKey(
+    author = models.ForeignKey(
         User,
         verbose_name='Автор рецепта',
         related_name='recipes',
@@ -62,7 +71,7 @@ class Recipe(models.Model):
         verbose_name='Создан'
     )
     cooking_time = models.PositiveSmallIntegerField(
-        verbose_name='Время приготовления',
+        verbose_name='Время приготовления, мин.',
         validators=[MinValueValidator(1)]
     )
     image = models.ImageField(

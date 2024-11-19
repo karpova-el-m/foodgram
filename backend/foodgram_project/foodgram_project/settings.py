@@ -17,7 +17,7 @@ INSTALLED_APPS = [
     'following.apps.FollowingConfig',
     'pages.apps.PagesConfig',
     'recipes.apps.RecipesConfig',
-    'shopping_list.apps.Shopping_listConfig',
+    'shopping_list.apps.ShoppingListConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -36,7 +36,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'foodgram_project.urls'
+ROOT_URLCONF = 'api.urls'
 
 TEMPLATES = [
     {
@@ -78,7 +78,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru-RU'
 
 TIME_ZONE = 'UTC'
 
