@@ -1,4 +1,6 @@
 from pathlib import Path
+import os
+from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -12,18 +14,22 @@ ALLOWED_HOSTS = [
 ]
 
 INSTALLED_APPS = [
-    'api.apps.ApiConfig',
-    'core.apps.CoreConfig',
-    'following.apps.FollowingConfig',
-    'pages.apps.PagesConfig',
-    'recipes.apps.RecipesConfig',
-    'shopping_list.apps.ShoppingListConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'djoser',
+    'rest_framework.authtoken',
+    'django_extensions',
+    'api.apps.ApiConfig',
+    'core.apps.CoreConfig',
+    'following.apps.FollowingConfig',
+    'pages.apps.PagesConfig',
+    'recipes.apps.RecipesConfig',
+    'shopping_list.apps.ShoppingListConfig',
 ]
 
 MIDDLEWARE = [
@@ -36,7 +42,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'api.urls'
+ROOT_URLCONF = 'foodgram_project.urls'
 
 TEMPLATES = [
     {
@@ -78,6 +84,26 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+REST_FRAMEWORK = {
+    'PAGE_SIZE': 6,
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'BLACKLIST_AFTER_ROTATION': True,
+}
+
+DJOSER = {
+    'LOGIN_FIELD': 'email',
+}
+
 LANGUAGE_CODE = 'ru-RU'
 
 TIME_ZONE = 'UTC'
@@ -91,3 +117,9 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'recipes.User'
+
+MEDIA_URL = '/media/'
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

@@ -8,3 +8,7 @@ MEASUREMENT_UNIT_CHOICES = [
     ('л', 'Литр'),
     ('мл', 'Миллилитр')
 ]
+MAX_LENGTH_USERNAME = 150
+USER_NAME_REGEX = r'^[\w.@+-]+\Z'
+MAX_LENGTH_FIRST_AND_LAST_NAME = 150
+NON_VALID_USERNAME = 'me'
