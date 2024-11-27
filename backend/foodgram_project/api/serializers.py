@@ -2,10 +2,12 @@ import base64
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
-from following.models import Follow
 from foodgram_project.constants import NON_VALID_USERNAME
-from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
 from rest_framework import serializers
+
+from shopping_list.models import ShoppingList
+from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag, Favorite
+from following.models import Follow
 
 User = get_user_model()
 
@@ -38,12 +40,18 @@ class IngredientSerializer(serializers.ModelSerializer):
                 return recipe_ingredient.amount
         return None
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if not self.context.get('recipe_id'):
+            representation.pop('amount', None)
+        return representation
+
 
 class TagSerializer(serializers.ModelSerializer):
     """Сериализатор объекта тег."""
     class Meta:
         model = Tag
-        fields = '__all__'
+        fields = ['id', 'name', 'slug']
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -126,6 +134,9 @@ class RecipeSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     author.is_subscribed = serializers.SerializerMethodField()
     tags = TagSerializer(read_only=True, many=True)
+    image = Base64ImageField(required=True, allow_null=False)
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
@@ -137,7 +148,9 @@ class RecipeSerializer(serializers.ModelSerializer):
             'cooking_time',
             'image',
             'tags',
-            'ingredients'
+            'ingredients',
+            'is_favorited',
+            'is_in_shopping_cart'
         ]
 
     def get_ingredients(self, obj):
@@ -145,39 +158,41 @@ class RecipeSerializer(serializers.ModelSerializer):
         Возвращает ингредиеты определенного рецепта.
         """
         ingredients = obj.ingredients.all()
-        serializer = IngredientSerializer(ingredients, many=True, context={'recipe_id': obj.id})
+        serializer = IngredientSerializer(
+            ingredients,
+            many=True,
+            context={'recipe_id': obj.id}
+        )
         return serializer.data
 
+    def get_is_favorited(self, obj):
+        """Проверка, добавлен ли рецепт в избранное текущим пользователем."""
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return Favorite.objects.filter(user=request.user, recipe=obj).exists()
+        return False
 
-# class TokenSerializer(serializers.Serializer):
-#     email = serializers.CharField(
-#         label='Email',
-#         write_only=True)
-#     password = serializers.CharField(
-#         label='Пароль',
-#         style={'input_type': 'password'},
-#         trim_whitespace=False,
-#         write_only=True)
-#     token = serializers.CharField(
-#         label='Токен',
-#         read_only=True)
+    def get_is_in_shopping_cart(self, obj):
+        """Проверка, добавлен ли рецепт в список покупок."""
+        request = self.context.get('request')
+        if request.user.is_authenticated:
+            shopping_list = ShoppingList.objects.filter(user=request.user).first()
+            if shopping_list:
+                return obj in shopping_list.recipes.all()
+        return False
 
-#     def validate(self, attrs):
-#         email = attrs.get('email')
-#         password = attrs.get('password')
-#         if email and password:
-#             user = authenticate(
-#                 request=self.context.get('request'),
-#                 email=email,
-#                 password=password)
-#             if not user:
-#                 raise serializers.ValidationError(
-#                     'Не удается войти в систему с предоставленными учетными данными.',
-#                     code='authorization')
-#         else:
-#             msg = 'Необходимо указать "адрес электронной почты" и "пароль".'
-#             raise serializers.ValidationError(
-#                 msg,
-#                 code='authorization')
-#         attrs['user'] = user
-#         return attrs
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    """Сериализатор для рецептов, добавленных в избранное."""
+    class Meta:
+        model = Favorite
+        fields = ['id', 'name', 'image', 'cooking_time']
+        read_only_fields = ['name', 'image', 'cooking_time']
+
+    def create(self, validated_data):
+        """Создание записи о добавлении рецепта в избранное."""
+        user = self.context['request'].user
+        recipe = validated_data['recipe']
+        if Favorite.objects.filter(user=user, recipe=recipe).exists():
+            raise serializers.ValidationError('Этот рецепт уже в избранном.')
+        return Favorite.objects.create(user=user, **validated_data)

@@ -5,13 +5,14 @@ from django.urls import include, path, reverse_lazy
 from django.views.generic.edit import CreateView
 from rest_framework import routers
 
-from .views import RecipeViewSet, UserViewSet, IngredientViewSet
+from .views import RecipeViewSet, UserViewSet, IngredientViewSet, TagsViewSet
 
 app_name = 'foodgram'
 
 router_v1 = routers.DefaultRouter()
 router_v1.register(r'recipes', RecipeViewSet, basename='recipes')
 router_v1.register('users', UserViewSet, basename='users')
+router_v1.register(r'tags', TagsViewSet, basename='tags')
 router_v1.register(r'ingredients', IngredientViewSet, basename='ingredients')
 
 urlpatterns = [

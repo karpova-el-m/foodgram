@@ -160,3 +160,20 @@ class RecipeIngredient(models.Model):
 
     def __str__(self):
         return f'{self.recipe.name}/{self.ingredient.name}'
+
+
+class Favorite(models.Model):
+    """Модель для рецептов, добавленных в избранное."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='favorites')
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name='unique_favorite_combination'
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.user.username} добавил в избранное {self.recipe.name}'
