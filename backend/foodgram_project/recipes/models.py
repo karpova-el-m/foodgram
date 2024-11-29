@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from foodgram_project.constants import (
@@ -10,7 +11,7 @@ from foodgram_project.constants import (
     MAX_LENGTH_FIRST_AND_LAST_NAME
 )
 from .enums import UserRoles
-from .validators import validate_username
+from .validators import validate_username, validate_amount
 
 
 class User(AbstractUser):
@@ -151,6 +152,7 @@ class RecipeIngredient(models.Model):
     amount = models.DecimalField(
         max_digits=6,
         decimal_places=2,
+        validators=[validate_amount],
         verbose_name='Количество'
     )
 

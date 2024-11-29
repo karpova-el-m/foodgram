@@ -11,6 +11,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from django.shortcuts import get_object_or_404
+from rest_framework import serializers
+from rest_framework.exceptions import PermissionDenied
 
 from recipes.models import Ingredient, Recipe, Tag, Favorite
 from .serializers import (
@@ -36,8 +38,56 @@ class RecipeViewSet(ModelViewSet):
     filterset_fields = ('author', 'tags__name')
     search_fields = ('^author',)
 
+    def get_permissions(self):
+        """Задаёт разрешения для разных методов."""
+        if self.action in ['create', 'partial_update']:
+            return [IsAuthenticated()]
+        return super().get_permissions()
+
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    def validate_ingredients(self, ingredients):
+        """Проверяет ингредиенты на уникальность и корректность."""
+        ingredient_ids = [item['id'] for item in ingredients]
+        if len(ingredient_ids) != len(set(ingredient_ids)):
+            raise serializers.ValidationError('Ингредиенты не могут повторяться.')
+        ingredient_ids_from_db = [ingredient.id for ingredient in Ingredient.objects.all()]
+        for ingredient_data in ingredients:
+            ingredient_id = ingredient_data.get('id')
+            if ingredient_id not in ingredient_ids_from_db:
+                raise serializers.ValidationError(f'Ингредиент с id {ingredient_id} не найден в базе данных.')
+        if not ingredients or not any(item.get('amount', 0) > 0 for item in ingredients):
+            raise serializers.ValidationError('Укажите хотя бы один ингредиент с количеством больше 0.')
+
+    def validate_tags(self, tags):
+        """Проверяет теги на уникальность и существование в базе данных."""
+        if len(tags) != len(set(tags)):
+            raise serializers.ValidationError(
+                'Теги не могут повторяться.'
+            )
+        if not tags:
+            raise serializers.ValidationError(
+                'Рецепт должен содержать хотя бы один тег.'
+            )
+        tags_from_db = [tag.id for tag in Tag.objects.all()]
+        for tag in tags:
+            if tag not in tags_from_db:
+                raise serializers.ValidationError(
+                    f'Тег с id {tag} не найден в базе данных.'
+                )
+
+    def create(self, request, *args, **kwargs):
+        self.validate_ingredients(request.data.get('ingredients', []))
+        self.validate_tags(request.data.get('tags', []))
+        return super().create(request, *args, **kwargs)
+
+    def perform_update(self, serializer):
+        if self.get_object().author != self.request.user:
+            raise PermissionDenied('У вас нет прав на редактирование этого рецепта.')
+        self.validate_ingredients(self.request.data.get('ingredients', []))
+        self.validate_tags(self.request.data.get('tags', []))
+        serializer.save()
 
     @action(
         detail=False,
@@ -46,19 +96,30 @@ class RecipeViewSet(ModelViewSet):
         url_path='favorite'
     )
     def favorite(self, request):
-        user = request.user
         recipe = self.get_object()
         if request.method == 'POST':
-            if Favorite.objects.filter(user=user, recipe=recipe).exists():
-                return Response({'detail': 'Рецепт уже добавлен в избранное.'}, status=status.HTTP_400_BAD_REQUEST)
-            Favorite.objects.create(user=user, recipe=recipe)
-            return Response({'detail': 'Рецепт добавлен в избранное.'}, status=status.HTTP_201_CREATED)
+            if Favorite.objects.filter(user=request.user, recipe=recipe).exists():
+                return Response(
+                    {'detail': 'Рецепт уже добавлен в избранное.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            Favorite.objects.create(user=request.user, recipe=recipe)
+            return Response(
+                {'detail': 'Рецепт добавлен в избранное.'},
+                status=status.HTTP_201_CREATED
+            )
         elif request.method == 'DELETE':
-            favorite = Favorite.objects.filter(user=user, recipe=recipe).first()
+            favorite = Favorite.objects.filter(user=request.user, recipe=recipe).first()
             if not favorite:
-                return Response({'detail": "Рецепт не найден в избранном.'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {'detail': 'Рецепт не найден в избранном.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             favorite.delete()
-            return Response({'detail": "Рецепт удален из избранного.'}, status=status.HTTP_204_NO_CONTENT)
+            return Response(
+                {'detail': 'Рецепт удален из избранного.'},
+                status=status.HTTP_204_NO_CONTENT
+            )
 
     @action(
         detail=True,
@@ -68,9 +129,10 @@ class RecipeViewSet(ModelViewSet):
     )
     def add_to_shopping_cart(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
-        user = request.user
         if request.method == 'POST':
-            shopping_list, created = ShoppingList.objects.get_or_create(user=user)
+            shopping_list, created = ShoppingList.objects.get_or_create(
+                user=request.user
+            )
             shopping_list.recipes.add(recipe)
             shopping_list.save()
             for ingredient in recipe.ingredients.all():
@@ -78,11 +140,12 @@ class RecipeViewSet(ModelViewSet):
                     shopping_list=shopping_list,
                     ingredient=ingredient,
                 )
-                shopping_list_item.amount += ingredient.amount
+                if not created:
+                    shopping_list_item.amount += ingredient.amount
                 shopping_list_item.save()
             return Response({'detail': 'Рецепт добавлен в список покупок.'}, status=status.HTTP_200_OK)
         elif request.method == 'DELETE':
-            shopping_list = ShoppingList.objects.filter(user=user).first()
+            shopping_list = ShoppingList.objects.filter(user=request.user).first()
             if not shopping_list:
                 return Response({'detail': 'Список покупок не найден.'}, status=status.HTTP_404_NOT_FOUND)
             shopping_list.recipes.remove(recipe)

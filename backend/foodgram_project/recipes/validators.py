@@ -11,3 +11,8 @@ def validate_username(value):
             message='Можно использовать латинские буквы и символы ., @, +, -.',
             params={"value": value},
         )
+
+
+def validate_amount(value):
+    if value < 0:
+        raise ValidationError('Amount должен быть больше 0.')

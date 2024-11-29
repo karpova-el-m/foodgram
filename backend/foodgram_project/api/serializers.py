@@ -37,8 +37,8 @@ class IngredientSerializer(serializers.ModelSerializer):
                 recipe_id=recipe_id, ingredient=obj
             ).first()
             if recipe_ingredient:
-                return recipe_ingredient.amount
-        return None
+                amount = recipe_ingredient.amount
+                return amount
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -132,7 +132,6 @@ class RecipeSerializer(serializers.ModelSerializer):
     """Сериализатор объекта рецепт."""
     ingredients = serializers.SerializerMethodField()
     author = UserSerializer(read_only=True)
-    author.is_subscribed = serializers.SerializerMethodField()
     tags = TagSerializer(read_only=True, many=True)
     image = Base64ImageField(required=True, allow_null=False)
     is_favorited = serializers.SerializerMethodField()
@@ -154,32 +153,44 @@ class RecipeSerializer(serializers.ModelSerializer):
         ]
 
     def get_ingredients(self, obj):
-        """
-        Возвращает ингредиеты определенного рецепта.
-        """
-        ingredients = obj.ingredients.all()
-        serializer = IngredientSerializer(
-            ingredients,
-            many=True,
-            context={'recipe_id': obj.id}
-        )
-        return serializer.data
+        recipe_ingredients = RecipeIngredient.objects.filter(recipe=obj)
+        return [
+            {
+                "id": ri.ingredient.id,
+                "name": ri.ingredient.name,
+                "measurement_unit": ri.ingredient.measurement_unit,
+                "amount": ri.amount,
+            }
+            for ri in recipe_ingredients
+        ]
 
     def get_is_favorited(self, obj):
-        """Проверка, добавлен ли рецепт в избранное текущим пользователем."""
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             return Favorite.objects.filter(user=request.user, recipe=obj).exists()
         return False
 
     def get_is_in_shopping_cart(self, obj):
-        """Проверка, добавлен ли рецепт в список покупок."""
         request = self.context.get('request')
-        if request.user.is_authenticated:
-            shopping_list = ShoppingList.objects.filter(user=request.user).first()
-            if shopping_list:
-                return obj in shopping_list.recipes.all()
+        if request and request.user.is_authenticated:
+            return ShoppingList.objects.filter(user=request.user, recipes=obj).exists()
         return False
+
+    def create(self, validated_data):
+        tags_data = self.initial_data.get('tags')
+        ingredients_data = self.initial_data.get('ingredients')
+        recipe = Recipe.objects.create(**validated_data)
+        if tags_data:
+            recipe.tags.set(tags_data)
+        if ingredients_data:
+            for ingredient_data in ingredients_data:
+                ingredient = Ingredient.objects.get(id=ingredient_data['id'])
+                RecipeIngredient.objects.create(
+                    recipe=recipe,
+                    ingredient=ingredient,
+                    amount=ingredient_data['amount']
+                )
+        return recipe
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
