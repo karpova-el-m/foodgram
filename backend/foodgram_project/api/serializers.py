@@ -2,12 +2,12 @@ import base64
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
-from foodgram_project.constants import NON_VALID_USERNAME
+from following.models import Follow
 from rest_framework import serializers
 
+from foodgram_project.constants import NON_VALID_USERNAME
+from recipes.models import Favorite, Ingredient, Recipe, RecipeIngredient, Tag
 from shopping_list.models import ShoppingList
-from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag, Favorite
-from following.models import Follow
 
 User = get_user_model()
 
@@ -60,7 +60,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'username', 'first_name', 'last_name', 'password']
+        fields = [
+            'id',
+            'email',
+            'username',
+            'first_name',
+            'last_name',
+            'password'
+        ]
 
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
@@ -70,7 +77,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     """Сериализатор объекта юзер."""
     is_subscribed = serializers.SerializerMethodField()
-    password = serializers.CharField(write_only=True, required=False)
+    password = serializers.CharField(write_only=True)
     avatar = Base64ImageField(required=False, allow_null=True)
 
     class Meta:
@@ -96,7 +103,9 @@ class UserSerializer(serializers.ModelSerializer):
         """
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            return Follow.objects.filter(user=request.user, following=obj).exists()
+            return Follow.objects.filter(
+                user=request.user, following=obj
+            ).exists()
         return False
 
     def validate(self, data):
@@ -156,10 +165,10 @@ class RecipeSerializer(serializers.ModelSerializer):
         recipe_ingredients = RecipeIngredient.objects.filter(recipe=obj)
         return [
             {
-                "id": ri.ingredient.id,
-                "name": ri.ingredient.name,
-                "measurement_unit": ri.ingredient.measurement_unit,
-                "amount": ri.amount,
+                'id': ri.ingredient.id,
+                'name': ri.ingredient.name,
+                'measurement_unit': ri.ingredient.measurement_unit,
+                'amount': ri.amount,
             }
             for ri in recipe_ingredients
         ]
@@ -167,13 +176,17 @@ class RecipeSerializer(serializers.ModelSerializer):
     def get_is_favorited(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            return Favorite.objects.filter(user=request.user, recipe=obj).exists()
+            return Favorite.objects.filter(
+                user=request.user, recipe=obj
+            ).exists()
         return False
 
     def get_is_in_shopping_cart(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            return ShoppingList.objects.filter(user=request.user, recipes=obj).exists()
+            return ShoppingList.objects.filter(
+                user=request.user, recipes=obj
+            ).exists()
         return False
 
     def create(self, validated_data):
@@ -207,3 +220,73 @@ class FavoriteSerializer(serializers.ModelSerializer):
         if Favorite.objects.filter(user=user, recipe=recipe).exists():
             raise serializers.ValidationError('Этот рецепт уже в избранном.')
         return Favorite.objects.create(user=user, **validated_data)
+
+
+class RecipeShortSerializer(serializers.ModelSerializer):
+    """
+    Упрощенный сериализатор рецепта из подписок.
+    """
+    class Meta:
+        model = Recipe
+        fields = [
+            'id',
+            'name',
+            'image',
+            'cooking_time'
+        ]
+
+
+class FollowSerializer(serializers.ModelSerializer):
+    """Сериализатор для подписок."""
+    is_subscribed = serializers.SerializerMethodField()
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.IntegerField(source='recipes.count')
+    avatar = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'email',
+            'username',
+            'first_name',
+            'last_name',
+            'is_subscribed',
+            'recipes',
+            'recipes_count',
+            'avatar'
+        ]
+
+    def get_is_subscribed(self, obj):
+        """
+        Определяет, подписан ли текущий пользователь на пользователя.
+        """
+        user = self.context['request'].user
+        return user.following.filter(following=obj).exists()
+
+    def get_recipes(self, obj):
+        """Получает список рецептов пользователя."""
+        request = self.context['request']
+        try:
+            recipes_limit = int(request.query_params.get('recipes_limit', 0))
+            if recipes_limit < 0:
+                recipes_limit = 0
+        except ValueError:
+            recipes_limit = 0
+        recipes = obj.recipes.all()
+        if recipes_limit:
+            recipes = recipes[:recipes_limit]
+        return RecipeShortSerializer(
+            recipes,
+            many=True,
+            context=self.context
+        ).data
+
+    def get_avatar(self, obj):
+        """
+        Получает полный URL для аватара пользователя.
+        """
+        request = self.context['request']
+        return request.build_absolute_uri(
+            obj.avatar.url
+        ) if obj.avatar else None
