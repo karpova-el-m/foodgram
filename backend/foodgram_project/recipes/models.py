@@ -1,6 +1,5 @@
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator
-from django.core.exceptions import ValidationError
 from django.db import models
 
 from foodgram_project.constants import (
@@ -101,7 +100,7 @@ class Recipe(models.Model):
     )
     text = models.TextField(verbose_name='Описание рецепта')
     author = models.ForeignKey(
-        'User',
+        User,
         verbose_name='Автор рецепта',
         related_name='recipes',
         on_delete=models.CASCADE
@@ -166,10 +165,22 @@ class RecipeIngredient(models.Model):
 
 class Favorite(models.Model):
     """Модель для рецептов, добавленных в избранное."""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='favorites')
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='favorites',
+        verbose_name='Пользователь'
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='favorites',
+        verbose_name='Избранное'
+    )
 
     class Meta:
+        verbose_name = 'Избранный рецепт'
+        verbose_name_plural = 'Избранные рецепты'
         constraints = [
             models.UniqueConstraint(
                 fields=('user', 'recipe'),

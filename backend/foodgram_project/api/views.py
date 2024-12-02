@@ -1,4 +1,5 @@
 import logging
+import os
 
 from django.contrib.auth import get_user_model
 from rest_framework import status
@@ -16,6 +17,11 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
+from django.http import HttpResponse
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 from recipes.models import Ingredient, Recipe, Tag, Favorite
 from following.models import Follow
@@ -92,7 +98,7 @@ class RecipeViewSet(ModelViewSet):
         serializer.save(author=self.request.user)
 
     def validate_ingredients(self, ingredients):
-        """Проверяет ингредиенты на уникальность и корректность.""" #Вынести в валидаторы
+        """Проверяет ингредиенты на уникальность и корректность."""
         ingredient_ids = [item['id'] for item in ingredients]
         if len(ingredient_ids) != len(set(ingredient_ids)):
             raise serializers.ValidationError(
@@ -115,7 +121,7 @@ class RecipeViewSet(ModelViewSet):
             )
 
     def validate_tags(self, tags):
-        """Проверяет теги на уникальность и существование в базе данных.""" #Вынести в валидаторы
+        """Проверяет теги на уникальность и существование в базе данных."""
         if len(tags) != len(set(tags)):
             raise serializers.ValidationError(
                 'Теги не могут повторяться.'
@@ -147,7 +153,7 @@ class RecipeViewSet(ModelViewSet):
         permission_classes=(IsAuthenticated,),
         url_path='favorite'
     )
-    def favorite(self, request, pk=None):  #Вынести дублирующий код в сериализатор
+    def favorite(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
         if request.method == 'POST':
             if Favorite.objects.filter(
@@ -189,7 +195,7 @@ class RecipeViewSet(ModelViewSet):
         url_path='shopping_cart'
     )
     def shopping_cart(self, request, pk=None):
-        """Добавление и удаление рецепта из списка покупок.""" #Вынести дублирующий код в сериализатор
+        """Добавление и удаление рецепта из списка покупок."""
         user = request.user
         shopping_list, created = ShoppingList.objects.get_or_create(user=user)
         recipe = get_object_or_404(Recipe, pk=pk)
@@ -227,7 +233,7 @@ class RecipeViewSet(ModelViewSet):
         permission_classes=(IsAuthenticated,),
         url_path='download_shopping_cart'
     )
-    def download_shopping_cart(self, request): #Пока так. Разобраться как настроить скачивание файла
+    def download_shopping_cart(self, request):
         """Скачать список покупок."""
         user = request.user
         shopping_list = ShoppingList.objects.filter(user=user).first()
@@ -251,16 +257,37 @@ class RecipeViewSet(ModelViewSet):
                         'measurement_unit': ingredient.measurement_unit,
                         'amount': ingredient_data.amount
                     }
-        response = [
-            {
-                'id': ingredient_id,
-                'name': data['name'],
-                'measurement_unit': data['measurement_unit'],
-                'amount': data['amount']
-            }
-            for ingredient_id, data in ingredients_summary.items()
-        ]
-        return Response(response, status=status.HTTP_200_OK)
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = (
+            'attachment; filename="shopping_list.pdf"'
+        )
+        FONT_PATH = os.path.join(
+            settings.BASE_DIR,
+            'api',
+            'fonts',
+            'Stamps.ttf'
+        )
+        pdfmetrics.registerFont(TTFont('Stamps', FONT_PATH))
+        pdf_canvas = canvas.Canvas(response, pagesize=A4)
+        pdf_canvas.setFont('Stamps', 12)
+        width, height = A4
+        pdf_canvas.drawString(
+            50, height - 50,
+            f'Список покупок для {user.username}'
+        )
+        y_position = height - 100
+        for ingr in ingredients_summary.values():
+            line = (
+                f"{ingr['name']} - {ingr['amount']} {ingr['measurement_unit']}"
+            )
+            pdf_canvas.drawString(50, y_position, line)
+            y_position -= 20
+            if y_position < 50:
+                pdf_canvas.showPage()
+                pdf_canvas.setFont('Helvetica', 12)
+                y_position = height - 50
+        pdf_canvas.save()
+        return response
 
     @action(
         detail=True,
@@ -269,8 +296,8 @@ class RecipeViewSet(ModelViewSet):
     )
     def get_short_link(self, request, pk=None):
         """Возвращает короткую ссылку на рецепт."""
-        base_url = getattr(settings, 'BASE_URL', 'http://127.0.0.1:8000') #Пока так
-        short_link = f"{base_url}/recipes/{pk}/"
+        base_url = getattr(settings, 'BASE_URL', 'http://127.0.0.1:8000')
+        short_link = f"{base_url}/{pk}/"
         return Response(
             {'short-link': short_link},
             status=status.HTTP_200_OK

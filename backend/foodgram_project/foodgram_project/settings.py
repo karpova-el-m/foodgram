@@ -4,13 +4,18 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-$^jsvz8tc(5n!6d5d0arvk*#-_6e1uky_pl#lw7cw___yz099('
+SECRET_KEY = os.getenv(
+    'SECRET_KEY', 'django-insecure-$^jsvz8tc(5n!6d5d0arvk*#-_6e1uky_pl#lw7cw___yz099('
+)
 
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True')
 
 ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
+    host.strip()
+    for host in os.getenv(
+        'ALLOWED_HOSTS',
+        '127.0.0.1,localhost,84.252.136.172,foodgram-project.ddnsking.com',
+    ).split(',')
 ]
 
 INSTALLED_APPS = [
@@ -26,9 +31,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'django_extensions',
     'api.apps.ApiConfig',
-    'core.apps.CoreConfig',
     'following.apps.FollowingConfig',
-    'pages.apps.PagesConfig',
     'recipes.apps.RecipesConfig',
     'shopping_list.apps.ShoppingListConfig',
 ]
@@ -124,3 +127,5 @@ AUTH_USER_MODEL = 'recipes.User'
 MEDIA_URL = '/media/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+BASE_URL = 'https://foodgram-project.ddnsking.com'
