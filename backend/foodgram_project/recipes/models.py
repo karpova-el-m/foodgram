@@ -2,15 +2,12 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from foodgram_project.constants import (
-    MAX_LENGTH,
-    MAX_TITLE_LENGTH,
-    MEASUREMENT_UNIT_CHOICES,
-    MAX_LENGTH_USERNAME,
-    MAX_LENGTH_FIRST_AND_LAST_NAME
-)
-from .enums import UserRoles
-from .validators import validate_username, validate_amount
+from foodgram_project.constants import (MAX_LENGTH,
+                                        MAX_LENGTH_FIRST_AND_LAST_NAME,
+                                        MAX_LENGTH_USERNAME, MAX_TITLE_LENGTH,
+                                        MEASUREMENT_UNIT_CHOICES)
+
+from .validators import validate_amount, validate_username
 
 
 class User(AbstractUser):
@@ -27,12 +24,6 @@ class User(AbstractUser):
     last_name = models.CharField(
         max_length=MAX_LENGTH_FIRST_AND_LAST_NAME,
     )
-    role = models.CharField(
-        verbose_name='роль',
-        max_length=UserRoles.max_length_field(),
-        choices=UserRoles.choices(),
-        default=UserRoles.user.name
-    )
     avatar = models.ImageField(
         upload_to='users/images/',
         null=True,
@@ -41,10 +32,6 @@ class User(AbstractUser):
     )
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
-
-    @property
-    def is_admin(self):
-        return self.role == UserRoles.admin.name or self.is_superuser
 
 
 class Tag(models.Model):
@@ -79,7 +66,7 @@ class Ingredient(models.Model):
         max_length=MAX_LENGTH
     )
     measurement_unit = models.CharField(
-        max_length=2,
+        max_length=10,
         choices=MEASUREMENT_UNIT_CHOICES,
         verbose_name='Единица измерения'
     )

@@ -2,9 +2,9 @@ import base64
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
-from following.models import Follow
 from rest_framework import serializers
 
+from following.models import Follow
 from foodgram_project.constants import NON_VALID_USERNAME
 from recipes.models import Favorite, Ingredient, Recipe, RecipeIngredient, Tag
 from shopping_list.models import ShoppingList

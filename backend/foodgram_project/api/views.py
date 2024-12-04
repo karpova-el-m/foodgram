@@ -1,40 +1,30 @@
-import logging
 import os
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from rest_framework import status
-from django_filters.rest_framework import (
-    CharFilter,
-    DjangoFilterBackend,
-    FilterSet,
-    BooleanFilter
-)
-from rest_framework.filters import SearchFilter
-from rest_framework.decorators import action
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
-from django.shortcuts import get_object_or_404
-from rest_framework import serializers
 from django.http import HttpResponse
-from reportlab.pdfgen import canvas
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import (BooleanFilter, CharFilter,
+                                           DjangoFilterBackend, FilterSet)
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
+from rest_framework import serializers, status
+from rest_framework.decorators import action
+from rest_framework.filters import SearchFilter
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from recipes.models import Ingredient, Recipe, Tag, Favorite
 from following.models import Follow
-from .serializers import (
-    IngredientSerializer, RecipeSerializer,
-    UserRegistrationSerializer, UserSerializer,
-    TagSerializer, FollowSerializer
-)
+from recipes.models import Favorite, Ingredient, Recipe, Tag
 from shopping_list.models import ShoppingList
-from django.conf import settings
-from .permissions import IsAuthorOrReadOnly
 
-logging.basicConfig(level=logging.INFO)
+from .permissions import IsAuthorOrReadOnly
+from .serializers import (FollowSerializer, IngredientSerializer,
+                          RecipeSerializer, TagSerializer,
+                          UserRegistrationSerializer, UserSerializer)
 
 User = get_user_model()
 
@@ -80,7 +70,6 @@ class RecipeViewSet(ModelViewSet):
     """Вьюсет для модели Recipe."""
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    pagination_class = LimitOffsetPagination
     permission_classes = [AllowAny]
     http_method_names = ['get', 'post', 'put', 'patch', 'delete']
     filter_backends = (DjangoFilterBackend,)
@@ -296,7 +285,7 @@ class RecipeViewSet(ModelViewSet):
     )
     def get_short_link(self, request, pk=None):
         """Возвращает короткую ссылку на рецепт."""
-        base_url = getattr(settings, 'BASE_URL', 'http://127.0.0.1:8000')
+        base_url = getattr(settings, 'BASE_URL')
         short_link = f"{base_url}/{pk}/"
         return Response(
             {'short-link': short_link},
@@ -309,6 +298,7 @@ class IngredientViewSet(ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = [AllowAny]
+    pagination_class = None
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = ('name',)
     search_fields = ('^name',)
@@ -317,6 +307,7 @@ class IngredientViewSet(ReadOnlyModelViewSet):
 class TagsViewSet(ReadOnlyModelViewSet):
     """Вьюсет для модели Tag."""
     queryset = Tag.objects.all()
+    pagination_class = None
     serializer_class = TagSerializer
     permission_classes = [AllowAny]
 
@@ -325,7 +316,6 @@ class UserViewSet(ModelViewSet):
     """Вьюсет для модели User."""
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    pagination_class = LimitOffsetPagination
     search_fields = ('username',)
     http_method_names = ['get', 'post', 'patch', 'put', 'delete']
 
@@ -356,9 +346,7 @@ class UserViewSet(ModelViewSet):
         permission_classes=(IsAuthorOrReadOnly,)
     )
     def profile_update(self, request):
-        logging.info(f'Запрос от пользователя: {request.user}')
         if not request.user or not request.user.is_authenticated:
-            logging.info(f'Пользователь не аутентифицирован. {request.user}')
             return Response(
                 {'detail': 'Пользователь не аутентифицирован.'},
                 status=status.HTTP_401_UNAUTHORIZED
@@ -371,13 +359,11 @@ class UserViewSet(ModelViewSet):
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            logging.info(f'Нов Данные пользователя: {serializer.data}')
             return Response(serializer.data, status=status.HTTP_200_OK)
         serializer = UserSerializer(
             self.request.user,
             context={'request': request}
         )
-        logging.info(f'Данные пользователя: {serializer.data}')
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(

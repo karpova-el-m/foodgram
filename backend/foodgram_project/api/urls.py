@@ -3,7 +3,7 @@ from django.conf.urls.static import static
 from django.urls import include, path
 from rest_framework import routers
 
-from .views import RecipeViewSet, UserViewSet, IngredientViewSet, TagsViewSet
+from .views import IngredientViewSet, RecipeViewSet, TagsViewSet, UserViewSet
 
 app_name = 'foodgram'
 
