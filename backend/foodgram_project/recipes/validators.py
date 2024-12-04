@@ -1,7 +1,6 @@
 from re import sub
 
 from django.core.exceptions import ValidationError
-
 from foodgram_project.constants import USER_NAME_REGEX
 
 
