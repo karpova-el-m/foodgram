@@ -17,7 +17,10 @@ class Base64ImageField(serializers.ImageField):
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstr = data.split(';base64,')
             ext = format.split('/')[-1]
+            print(f"Format: {format}, Extension: {ext}") 
             data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
+        else:
+            print("Invalid data format")
         return super().to_internal_value(data)
 
 
@@ -127,6 +130,7 @@ class UserSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password', None)
         avatar = validated_data.pop('avatar', None)
         if avatar:
+            print(f"Avatar received: {avatar}")
             instance.avatar = avatar
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
