@@ -143,7 +143,9 @@ AUTH_USER_MODEL = 'recipes.User'
 
 MEDIA_URL = '/media/'
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = '/media/'
+
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 BASE_URL = 'https://foodgram-project.ddnsking.com'
 
