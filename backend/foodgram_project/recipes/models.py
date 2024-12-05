@@ -25,6 +25,7 @@ class User(AbstractUser):
     )
     avatar = models.ImageField(
         upload_to='users/images/',
+        max_length=1024,
         null=True,
         blank=True,
         default=None
