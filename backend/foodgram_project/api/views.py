@@ -101,9 +101,11 @@ class RecipeViewSet(ModelViewSet):
                 raise serializers.ValidationError(
                     f'Ингредиент с id {ingredient_id} не найден в базе данных.'
                 )
-        if not ingredients or not any(item.get(
-            'amount', 0
-        ) > 0 for item in ingredients):
+        if not ingredients or not any(
+            (lambda x: int(
+                x.get('amount', 0)
+            ) > 0)(item) for item in ingredients
+        ):
             raise serializers.ValidationError(
                 'Укажите хотя бы один ингредиент с количеством больше 0.'
             )
@@ -272,7 +274,7 @@ class RecipeViewSet(ModelViewSet):
             y_position -= 20
             if y_position < 50:
                 pdf_canvas.showPage()
-                pdf_canvas.setFont('Helvetica', 12)
+                pdf_canvas.setFont('Stamps', 12)
                 y_position = height - 50
         pdf_canvas.save()
         return response
