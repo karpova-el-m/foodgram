@@ -125,15 +125,16 @@ class UserSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         """Обновление данных пользователя (без изменения пароля)."""
         password = validated_data.pop('password', None)
-        user = super().update(instance, validated_data)
-        avatar_data = validated_data.get('avatar', None)
-        if avatar_data:
-            instance.avatar = avatar_data
-            return super().update(instance, validated_data)
+        avatar = validated_data.pop('avatar', None)
+        if avatar:
+            instance.avatar = avatar
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
         if password:
-            user.set_password(password)
-            user.save()
-        return user
+            instance.set_password(password)
+            instance.save()
+        return instance
 
 
 class RecipeSerializer(serializers.ModelSerializer):
