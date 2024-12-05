@@ -42,6 +42,15 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://foodgram-project.ddnsking.com',
+    'http://foodgram-project.ddnsking.com',
+]
+
+CSRF_COOKIE_SECURE = True
+
+SECURE_SSL_REDIRECT = True
+
 ROOT_URLCONF = 'foodgram_project.urls'
 
 TEMPLATES = [
@@ -140,3 +149,22 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 BASE_URL = 'https://foodgram-project.ddnsking.com'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': '/path/to/your/logs/django_debug.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
