@@ -17,7 +17,7 @@ class Base64ImageField(serializers.ImageField):
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstr = data.split(';base64,')
             ext = format.split('/')[-1]
-            print(f"Format: {format}, Extension: {ext}") 
+            print(f"Format: {format}, Extension: {ext}")
             data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
         else:
             print("Invalid data format")
