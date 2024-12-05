@@ -44,12 +44,9 @@ MIDDLEWARE = [
 
 CSRF_TRUSTED_ORIGINS = [
     'https://foodgram-project.ddnsking.com',
-    'http://foodgram-project.ddnsking.com',
 ]
 
 CSRF_COOKIE_SECURE = True
-
-SECURE_SSL_REDIRECT = True
 
 ROOT_URLCONF = 'foodgram_project.urls'
 
