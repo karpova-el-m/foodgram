@@ -23,7 +23,8 @@ from shopping_list.models import ShoppingList
 from .permissions import IsAuthorOrReadOnly
 from .serializers import (FollowSerializer, IngredientSerializer,
                           RecipeSerializer, TagSerializer,
-                          UserRegistrationSerializer, UserSerializer)
+                          UserRegistrationSerializer, UserSerializer,
+                          AvatarSerializer)
 
 User = get_user_model()
 
@@ -404,15 +405,20 @@ class UserViewSet(ModelViewSet):
         """Обновление или удаление аватара пользователя."""
         user = request.user
         if request.method == 'PUT':
-            avatar = request.data.get('avatar')
-            if not avatar:
-                return Response(
-                    {'detail': 'Base64 строка аватара не передана.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            user.avatar = avatar
-            user.save()
-            return Response({'avatar': avatar}, status=status.HTTP_200_OK)
+            serializer = AvatarSerializer(request.user, data=request.data,
+                                          context={'request': request})
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            # avatar = request.data.get('avatar')
+            # if not avatar:
+            #     return Response(
+            #         {'detail': 'Base64 строка аватара не передана.'},
+            #         status=status.HTTP_400_BAD_REQUEST
+            #     )
+            # user.avatar = avatar
+            # user.save()
+            # return Response({'avatar': avatar}, status=status.HTTP_200_OK)
         elif request.method == 'DELETE':
             user.avatar = None
             user.save()
