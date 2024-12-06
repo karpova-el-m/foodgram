@@ -6,8 +6,6 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import (BooleanFilter, CharFilter,
                                            DjangoFilterBackend, FilterSet)
-from following.models import Follow
-from recipes.models import Favorite, Ingredient, Recipe, Tag
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -18,13 +16,15 @@ from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
-from shopping_list.models import ShoppingList
 
 from .permissions import IsAuthorOrReadOnly
+from recipes.models import Favorite, Ingredient, Recipe, Tag
+from following.models import Follow
 from .serializers import (AvatarSerializer, FollowSerializer,
                           IngredientSerializer, RecipeSerializer,
                           TagSerializer, UserRegistrationSerializer,
                           UserSerializer)
+from shopping_list.models import ShoppingList
 
 User = get_user_model()
 
@@ -410,15 +410,6 @@ class UserViewSet(ModelViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
-            # avatar = request.data.get('avatar')
-            # if not avatar:
-            #     return Response(
-            #         {'detail': 'Base64 строка аватара не передана.'},
-            #         status=status.HTTP_400_BAD_REQUEST
-            #     )
-            # user.avatar = avatar
-            # user.save()
-            # return Response({'avatar': avatar}, status=status.HTTP_200_OK)
         elif request.method == 'DELETE':
             user.avatar = None
             user.save()

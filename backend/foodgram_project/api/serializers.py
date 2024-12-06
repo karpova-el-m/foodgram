@@ -2,10 +2,11 @@ import base64
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
+from rest_framework import serializers
+
 from following.models import Follow
 from foodgram_project.constants import NON_VALID_USERNAME
 from recipes.models import Favorite, Ingredient, Recipe, RecipeIngredient, Tag
-from rest_framework import serializers
 from shopping_list.models import ShoppingList
 
 User = get_user_model()
@@ -87,7 +88,6 @@ class UserSerializer(serializers.ModelSerializer):
     """Сериализатор объекта юзер."""
     is_subscribed = serializers.SerializerMethodField()
     password = serializers.CharField(write_only=True)
-    # avatar = Base64ImageField(required=False, allow_null=True)
 
     class Meta:
         model = User
