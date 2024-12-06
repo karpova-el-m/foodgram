@@ -1,7 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator
 from django.db import models
-
 from foodgram_project.constants import (MAX_LENGTH,
                                         MAX_LENGTH_FIRST_AND_LAST_NAME,
                                         MAX_LENGTH_USERNAME, MAX_TITLE_LENGTH,
