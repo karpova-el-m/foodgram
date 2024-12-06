@@ -113,11 +113,11 @@ REST_FRAMEWORK = {
     ],
 }
 
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    'BLACKLIST_AFTER_ROTATION': True,
-}
+# SIMPLE_JWT = {
+#     'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
+#     'AUTH_HEADER_TYPES': ('Bearer',),
+#     'BLACKLIST_AFTER_ROTATION': True,
+# }
 
 DJOSER = {
     'LOGIN_FIELD': 'email',
@@ -145,7 +145,7 @@ MEDIA_URL = '/media/'
 
 MEDIA_ROOT = '/media/'
 
-# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
 
 BASE_URL = 'https://foodgram-project.ddnsking.com'
 
