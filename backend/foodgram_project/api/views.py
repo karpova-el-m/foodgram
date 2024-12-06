@@ -6,8 +6,6 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import (BooleanFilter, CharFilter,
                                            DjangoFilterBackend, FilterSet)
-from following.models import Follow
-from recipes.models import Favorite, Ingredient, Recipe, Tag
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -18,13 +16,16 @@ from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+
+from following.models import Follow
+from recipes.models import Favorite, Ingredient, Recipe, Tag
 from shopping_list.models import ShoppingList
 
 from .permissions import IsAuthorOrReadOnly
-from .serializers import (FollowSerializer, IngredientSerializer,
-                          RecipeSerializer, TagSerializer,
-                          UserRegistrationSerializer, UserSerializer,
-                          AvatarSerializer)
+from .serializers import (AvatarSerializer, FollowSerializer,
+                          IngredientSerializer, RecipeSerializer,
+                          TagSerializer, UserRegistrationSerializer,
+                          UserSerializer)
 
 User = get_user_model()
 
