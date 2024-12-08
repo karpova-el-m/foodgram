@@ -69,6 +69,21 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             'password'
         ]
 
+    def validate(self, data):
+        if data.get('username') == NON_VALID_USERNAME:
+            raise serializers.ValidationError(
+                f'Использовать имя "{NON_VALID_USERNAME}" запрещено'
+            )
+        if User.objects.filter(username=data.get('username')).exists():
+            raise serializers.ValidationError(
+                'Пользователь с таким username уже существует'
+            )
+        if User.objects.filter(email=data.get('email')).exists():
+            raise serializers.ValidationError(
+                'Пользователь с таким email уже существует'
+            )
+        return data
+
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
         return user
@@ -116,21 +131,6 @@ class UserSerializer(serializers.ModelSerializer):
                 user=request.user, following=obj
             ).exists()
         return False
-
-    def validate(self, data):
-        if data.get('username') == NON_VALID_USERNAME:
-            raise serializers.ValidationError(
-                f'Использовать имя "{NON_VALID_USERNAME}" запрещено'
-            )
-        if User.objects.filter(username=data.get('username')).exists():
-            raise serializers.ValidationError(
-                'Пользователь с таким username уже существует'
-            )
-        if User.objects.filter(email=data.get('email')).exists():
-            raise serializers.ValidationError(
-                'Пользователь с таким email уже существует'
-            )
-        return data
 
     def update(self, instance, validated_data):
         """Обновление данных пользователя (без изменения пароля)."""

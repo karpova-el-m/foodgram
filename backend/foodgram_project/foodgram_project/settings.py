@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
-DEBUG = os.getenv('DEBUG', 'True')
+DEBUG = os.getenv('DEBUG', 'False')
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
@@ -67,7 +67,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'foodgram_project.wsgi.application'
 
-if os.getenv('POSTGRES_DB') and os.getenv('POSTGRES_USER'):
+if DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -76,13 +83,6 @@ if os.getenv('POSTGRES_DB') and os.getenv('POSTGRES_USER'):
             'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
             'HOST': os.getenv('DB_HOST', ''),
             'PORT': os.getenv('DB_PORT', 5432),
-        }
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
 
@@ -136,7 +136,10 @@ AUTH_USER_MODEL = 'recipes.User'
 
 MEDIA_URL = '/media/'
 
-MEDIA_ROOT = '/media/'
+if DEBUG:
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+else:
+    MEDIA_ROOT = '/media/'
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
 
@@ -149,14 +152,33 @@ LOGGING = {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'django_debug.log')
+            'filename': os.path.join(BASE_DIR, 'django_debug.log'),
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
         },
     },
     'loggers': {
         'django': {
-            'handlers': ['file'],
+            'handlers': ['file', 'console'],
             'level': 'DEBUG',
             'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['file', 'console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'django.server': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'django.utils.autoreload': {
+            'handlers': ['file', 'console'],
+            'level': 'WARNING',
+            'propagate': False,
         },
     },
 }
