@@ -25,6 +25,7 @@ from .serializers import (AvatarSerializer, FollowSerializer,
                           TagSerializer, UserRegistrationSerializer,
                           UserSerializer)
 from shopping_list.models import ShoppingList
+from .paginators import CustomPagination
 
 User = get_user_model()
 
@@ -42,7 +43,11 @@ class RecipeFilter(FilterSet):
         """Фильтрует рецепты по тегам, переданным в запросе."""
         tags = self.request.query_params.getlist('tags')
         if tags:
-            queryset = queryset.filter(tags__name__in=tags).distinct()
+            queryset = queryset.filter(
+                tags__name__in=tags
+            ).distinct() | queryset.filter(
+                tags__slug__in=tags
+            ).distinct()
         return queryset
 
     def filter_is_favorited(self, queryset, name, value):
@@ -74,6 +79,7 @@ class RecipeViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'put', 'patch', 'delete']
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
+    pagination_class = CustomPagination
 
     def get_permissions(self):
         """Задает разрешения для разных методов."""
@@ -319,6 +325,7 @@ class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     search_fields = ('username',)
+    pagination_class = CustomPagination
     http_method_names = ['get', 'post', 'patch', 'put', 'delete']
 
     def get_permissions(self):

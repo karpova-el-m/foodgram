@@ -70,7 +70,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, data):
-        if data.get('username') == NON_VALID_USERNAME:
+        username = data.get('username').lower()
+        if username == NON_VALID_USERNAME.lower():
             raise serializers.ValidationError(
                 f'Использовать имя "{NON_VALID_USERNAME}" запрещено'
             )
