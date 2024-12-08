@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
-DEBUG = os.getenv('DEBUG', 'False')
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
@@ -134,12 +134,10 @@ AUTH_USER_MODEL = 'recipes.User'
 
 MEDIA_URL = '/media/'
 
-# if DEBUG:
-#     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-# else:
-#     MEDIA_ROOT = '/media/'
-
-MEDIA_ROOT = '/media/'
+if DEBUG:
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+else:
+    MEDIA_ROOT = '/media/'
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
 
