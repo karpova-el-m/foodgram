@@ -134,10 +134,12 @@ AUTH_USER_MODEL = 'recipes.User'
 
 MEDIA_URL = '/media/'
 
-if DEBUG:
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-else:
-    MEDIA_ROOT = '/media/'
+# if DEBUG:
+#     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# else:
+#     MEDIA_ROOT = '/media/'
+
+MEDIA_ROOT = '/media/'
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
 
