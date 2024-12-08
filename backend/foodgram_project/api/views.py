@@ -31,6 +31,7 @@ User = get_user_model()
 
 
 class RecipeFilter(FilterSet):
+    """Кастомный фильтр для модели Recipe."""
     tags = CharFilter(method='filter_tags')
     is_favorited = BooleanFilter(method='filter_is_favorited')
     is_in_shopping_cart = BooleanFilter(method='filter_is_in_shopping_cart')
@@ -68,6 +69,24 @@ class RecipeFilter(FilterSet):
         user = self.request.user
         if value and user.is_authenticated:
             return queryset.filter(shopping_list__user=user)
+        return queryset
+
+
+class IngredientFilter(FilterSet):
+    """Кастомный фильтр для модели Ingredient."""
+    name = CharFilter(method='filter_name')
+
+    class Meta:
+        model = Ingredient
+        fields = ['name']
+
+    def filter_name(self, queryset, name, value):
+        """
+        Кастомный фильтр для поиска по имени ингредиента.
+        Поддерживает поиск по первой букве или части названия.
+        """
+        if value:
+            return queryset.filter(name__icontains=value)
         return queryset
 
 
@@ -306,16 +325,13 @@ class IngredientViewSet(ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = [AllowAny]
-    pagination_class = None
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    filterset_fields = ('name',)
-    search_fields = ('^name',)
+    filterset_class = IngredientFilter
 
 
 class TagsViewSet(ReadOnlyModelViewSet):
     """Вьюсет для модели Tag."""
     queryset = Tag.objects.all()
-    pagination_class = None
     serializer_class = TagSerializer
     permission_classes = [AllowAny]
 
