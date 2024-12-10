@@ -3,7 +3,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 dotenv_path = os.path.join(BASE_DIR, '.env')
 
@@ -131,7 +131,6 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-# STATIC_ROOT = os.path.join(BASE_DIR, 'collected_static')
 STATIC_ROOT = BASE_DIR / 'collected_static'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -140,10 +139,12 @@ AUTH_USER_MODEL = 'users.User'
 
 MEDIA_URL = '/media/'
 
-if DEBUG:
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-else:
-    MEDIA_ROOT = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# if DEBUG:
+#     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# else:
+#     MEDIA_ROOT = '/media/'
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 31457280
 
