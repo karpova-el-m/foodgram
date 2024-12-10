@@ -28,9 +28,11 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'django_extensions',
     'api.apps.ApiConfig',
+    'core.apps.CoreConfig',
     'following.apps.FollowingConfig',
     'recipes.apps.RecipesConfig',
     'shopping_list.apps.ShoppingListConfig',
+    'users.apps.UsersConfig',
 ]
 
 MIDDLEWARE = [
@@ -133,7 +135,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'collected_static')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AUTH_USER_MODEL = 'recipes.User'
+AUTH_USER_MODEL = 'users.User'
 
 MEDIA_URL = '/media/'
 
@@ -142,7 +144,7 @@ if DEBUG:
 else:
     MEDIA_ROOT = '/media/'
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
+DATA_UPLOAD_MAX_MEMORY_SIZE = 31457280
 
 BASE_URL = 'https://foodgram-project.ddnsking.com'
 

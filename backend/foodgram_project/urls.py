@@ -9,6 +9,10 @@ urlpatterns = [
         'api/',
         include('api.urls', namespace='foodgram')
     ),
+    path(
+        'api/',
+        include('users.urls', namespace='users')
+    ),
 ]
 
 if settings.DEBUG:
