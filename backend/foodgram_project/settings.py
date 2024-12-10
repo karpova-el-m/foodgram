@@ -3,7 +3,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+# BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent
 
 dotenv_path = os.path.join(BASE_DIR, '.env')
 
@@ -140,6 +141,10 @@ AUTH_USER_MODEL = 'users.User'
 MEDIA_URL = '/media/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+print(MEDIA_ROOT)
+print(STATIC_ROOT)
+print(BASE_DIR)
 
 # if DEBUG:
 #     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
