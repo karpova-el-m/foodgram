@@ -9,10 +9,9 @@ from rest_framework.viewsets import ModelViewSet
 from core.paginators import CustomPagination
 from core.permissions import IsAuthorOrReadOnly
 from following.models import Follow
-
-from .serializers import (AvatarSerializer, 
-                          UserRegistrationSerializer, UserSerializer)
 from following.serializers import FollowSerializer
+from .serializers import (AvatarSerializer, UserRegistrationSerializer,
+                          UserSerializer)
 
 User = get_user_model()
 

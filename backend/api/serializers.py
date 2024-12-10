@@ -4,7 +4,6 @@ from rest_framework import serializers
 from core.fields import Base64ImageField
 from recipes.models import Favorite, Ingredient, Recipe, RecipeIngredient, Tag
 from shopping_list.models import ShoppingList
-
 from users.serializers import UserSerializer
 
 User = get_user_model()

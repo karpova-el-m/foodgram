@@ -17,11 +17,11 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
+from core.paginators import CustomPagination
+from core.permissions import IsAuthorOrReadOnly
 from recipes.models import Favorite, Ingredient, Recipe, Tag
 from shopping_list.models import ShoppingList
 
-from core.paginators import CustomPagination
-from core.permissions import IsAuthorOrReadOnly
 from .serializers import IngredientSerializer, RecipeSerializer, TagSerializer
 
 User = get_user_model()

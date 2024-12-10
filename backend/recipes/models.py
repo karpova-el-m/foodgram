@@ -4,6 +4,7 @@ from django.db import models
 
 from core.constants import (MAX_LENGTH, MAX_TITLE_LENGTH,
                             MEASUREMENT_UNIT_CHOICES)
+
 from .validators import validate_amount
 
 User = get_user_model()
