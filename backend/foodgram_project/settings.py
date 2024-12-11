@@ -139,16 +139,10 @@ AUTH_USER_MODEL = 'users.User'
 
 MEDIA_URL = '/media/'
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-print(MEDIA_ROOT)
-print(STATIC_ROOT)
-print(BASE_DIR)
-
-# if DEBUG:
-#     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-# else:
-#     MEDIA_ROOT = '/media/'
+if DEBUG:
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+else:
+    MEDIA_ROOT = '/media/'
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 31457280
 
