@@ -14,17 +14,25 @@ services:
   backend:
     image: karpovaelena/foodgram_backend
     env_file: .env
+    depends_on:
+      - db
     volumes:
       - static_volume:/backend_static
       - media:/media
   frontend:
     image: karpovaelena/foodgram_frontend
     env_file: .env
+    command: cp -r /app/build/. /frontend_static/
+    depends_on:
+      - backend
     volumes:
       - static_volume:/frontend_static
   gateway:
     image: karpovaelena/foodgram_gateway
     env_file: .env
+    depends_on:
+      - backend
+      - frontend
     volumes:
       - static_volume:/staticfiles/
       - media:/media
