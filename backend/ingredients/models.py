@@ -1,7 +1,6 @@
 from django.db import models
 
-from core.constants import (MAX_LENGTH,
-                            MEASUREMENT_UNIT_CHOICES)
+from core.constants import MAX_LENGTH, MEASUREMENT_UNIT_CHOICES
 
 
 class Ingredient(models.Model):
@@ -23,4 +22,3 @@ class Ingredient(models.Model):
 
     def __str__(self):
         return self.name
-

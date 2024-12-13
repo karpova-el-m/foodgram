@@ -7,12 +7,13 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from core.paginators import CustomPagination
 from core.filters import RecipeFilter
+from core.paginators import CustomPagination
 from core.permissions import IsAuthorOrReadOnly
-from .models import Recipe
-from tags.models import Tag
 from ingredients.models import Ingredient
+from tags.models import Tag
+
+from .models import Recipe
 from .serializers import RecipeSerializer
 
 User = get_user_model()

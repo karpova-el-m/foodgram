@@ -1,8 +1,9 @@
-from rest_framework import serializers
 from django.shortcuts import get_object_or_404
+from rest_framework import serializers
+
+from recipes.models import Recipe
 
 from .models import Favorite
-from recipes.models import Recipe
 
 
 class FavoriteSerializer(serializers.ModelSerializer):

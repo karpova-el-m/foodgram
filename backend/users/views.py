@@ -10,6 +10,7 @@ from core.paginators import CustomPagination
 from core.permissions import IsAuthorOrReadOnly
 from following.models import Follow
 from following.serializers import FollowSerializer
+
 from .serializers import (AvatarSerializer, UserRegistrationSerializer,
                           UserSerializer)
 

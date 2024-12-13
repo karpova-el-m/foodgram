@@ -2,12 +2,12 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from core.fields import Base64ImageField
-from recipes.models import Recipe, RecipeIngredient
 from favorite.models import Favorite
 from ingredients.models import Ingredient
+from recipes.models import Recipe, RecipeIngredient
 from shopping_cart.models import ShoppingCart
-from users.serializers import UserSerializer
 from tags.serializers import TagSerializer
+from users.serializers import UserSerializer
 
 User = get_user_model()
 

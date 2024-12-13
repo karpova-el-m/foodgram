@@ -2,10 +2,10 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from core.constants import (MAX_LENGTH, MAX_TITLE_LENGTH)
-from tags.models import Tag
-from ingredients.models import Ingredient
+from core.constants import MAX_LENGTH, MAX_TITLE_LENGTH
 from core.validators import validate_amount
+from ingredients.models import Ingredient
+from tags.models import Tag
 
 User = get_user_model()
 

@@ -1,8 +1,4 @@
-from django_filters.rest_framework import (
-    BooleanFilter,
-    CharFilter,
-    FilterSet
-)
+from django_filters.rest_framework import BooleanFilter, CharFilter, FilterSet
 
 from ingredients.models import Ingredient
 from recipes.models import Recipe

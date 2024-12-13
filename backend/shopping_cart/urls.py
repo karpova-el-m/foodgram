@@ -1,5 +1,4 @@
 from django.urls import include, path
-from rest_framework_nested.routers import NestedSimpleRouter
 from rest_framework import routers
 
 from .views import ShoppingCartViewSet
