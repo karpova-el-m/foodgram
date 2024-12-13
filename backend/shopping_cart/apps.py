@@ -1,7 +1,7 @@
 from django.apps import AppConfig
 
 
-class ShoppingListConfig(AppConfig):
+class ShoppingCartConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'shopping_list'
+    name = 'shopping_cart'
     verbose_name = 'Список покупок'

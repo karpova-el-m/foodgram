@@ -27,12 +27,14 @@ INSTALLED_APPS = [
     'djoser',
     'rest_framework.authtoken',
     'django_extensions',
-    'api.apps.ApiConfig',
     'core.apps.CoreConfig',
     'following.apps.FollowingConfig',
     'recipes.apps.RecipesConfig',
-    'shopping_list.apps.ShoppingListConfig',
+    'shopping_cart.apps.ShoppingCartConfig',
     'users.apps.UsersConfig',
+    'tags.apps.TagsConfig',
+    'ingredients.apps.IngredientsConfig',
+    'favorite.apps.FavoriteConfig',
 ]
 
 MIDDLEWARE = [

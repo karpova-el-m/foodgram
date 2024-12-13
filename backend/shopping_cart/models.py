@@ -3,17 +3,17 @@ from django.db import models
 from recipes.models import Recipe, User
 
 
-class ShoppingList(models.Model):
+class ShoppingCart(models.Model):
     """Модель списка покупок для пользователя."""
     user = models.ForeignKey(
         User,
-        related_name='shopping_list',
+        related_name='shopping_cart',
         on_delete=models.CASCADE,
         verbose_name='Пользователь'
     )
     recipes = models.ManyToManyField(
         Recipe,
-        related_name='shopping_list',
+        related_name='shopping_cart',
         verbose_name='Рецепты'
     )
 

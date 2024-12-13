@@ -2,57 +2,12 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from core.constants import (MAX_LENGTH, MAX_TITLE_LENGTH,
-                            MEASUREMENT_UNIT_CHOICES)
-
-from .validators import validate_amount
+from core.constants import (MAX_LENGTH, MAX_TITLE_LENGTH)
+from tags.models import Tag
+from ingredients.models import Ingredient
+from core.validators import validate_amount
 
 User = get_user_model()
-
-
-class Tag(models.Model):
-    """Модель Tag."""
-    name = models.CharField(
-        verbose_name='Тег',
-        unique=True,
-        max_length=MAX_LENGTH
-    )
-    slug = models.SlugField(
-        unique=True,
-        verbose_name='Идентификатор',
-        help_text=(
-            'Идентификатор страницы для URL; '
-            'разрешены символы латиницы, цифры, дефис и подчеркивание.'
-        ),
-    )
-
-    class Meta:
-        verbose_name = 'Тег'
-        verbose_name_plural = 'Теги'
-
-    def __str__(self):
-        return self.name
-
-
-class Ingredient(models.Model):
-    """Модель Ingredient."""
-    name = models.CharField(
-        verbose_name='Название ингредиента',
-        unique=True,
-        max_length=MAX_LENGTH
-    )
-    measurement_unit = models.CharField(
-        max_length=10,
-        choices=MEASUREMENT_UNIT_CHOICES,
-        verbose_name='Единица измерения'
-    )
-
-    class Meta:
-        verbose_name = 'Ингредиент'
-        verbose_name_plural = 'Ингредиенты'
-
-    def __str__(self):
-        return self.name
 
 
 class Recipe(models.Model):
@@ -124,32 +79,3 @@ class RecipeIngredient(models.Model):
 
     def __str__(self):
         return f'{self.recipe.name}/{self.ingredient.name}'
-
-
-class Favorite(models.Model):
-    """Модель для рецептов, добавленных в избранное."""
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='favorites',
-        verbose_name='Пользователь'
-    )
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        related_name='favorites',
-        verbose_name='Избранное'
-    )
-
-    class Meta:
-        verbose_name = 'Избранный рецепт'
-        verbose_name_plural = 'Избранные рецепты'
-        constraints = [
-            models.UniqueConstraint(
-                fields=('user', 'recipe'),
-                name='unique_favorite_combination'
-            )
-        ]
-
-    def __str__(self):
-        return f'{self.user.username} добавил в избранное {self.recipe.name}'

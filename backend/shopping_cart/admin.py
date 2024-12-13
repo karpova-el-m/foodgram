@@ -1,10 +1,10 @@
 from django.contrib import admin
 
-from .models import ShoppingList
+from .models import ShoppingCart
 
 
-@admin.register(ShoppingList)
-class ShoppingListAdmin(admin.ModelAdmin):
+@admin.register(ShoppingCart)
+class ShoppingCartAdmin(admin.ModelAdmin):
     list_display = ('id', 'user')
     search_fields = (
         'user__username',
