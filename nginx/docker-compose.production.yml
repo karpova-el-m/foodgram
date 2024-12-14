@@ -36,6 +36,5 @@ services:
     volumes:
       - static_volume:/staticfiles/
       - media:/media
-      - ../docs/:/staticfiles/api/docs/
     ports:
       - 3000:80

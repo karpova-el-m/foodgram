@@ -131,6 +131,8 @@ jobs:
           sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
           sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --noinput
           sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /backend_static/static/
+          sudo docker cp /home/yc-user/foodgram/redoc.html foodgram-gateway-1:/staticfiles
+          sudo docker cp /home/yc-user/foodgram/openapi-schema.yml foodgram-gateway-1:/staticfiles
   send_message:
     runs-on: ubuntu-latest
     needs: deploy
