@@ -3,7 +3,7 @@ from django.db import models
 
 from core.constants import MAX_LENGTH_FIRST_AND_LAST_NAME, MAX_LENGTH_USERNAME
 
-from .validators import validate_username
+from core.validators import validate_username
 
 
 class User(AbstractUser):

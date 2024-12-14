@@ -99,7 +99,7 @@ sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/col
 
 ### Просмотр документации.
 
-По адресу http://localhost/api/docs/ расположена спецификация API проекта.
+По адресу https://foodgram-project.ddnsking.com/api/docs/ расположена спецификация API проекта.
 
 #### Проект разработала:
 
