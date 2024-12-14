@@ -9,7 +9,7 @@ from shopping_cart.views import DownloadShoppingCartView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path(
-        'docs/',
+        'api/docs/',
         TemplateView.as_view(template_name='redoc.html'),
         name='redoc'
     ),
