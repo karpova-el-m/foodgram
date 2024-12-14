@@ -59,7 +59,8 @@ ROOT_URLCONF = 'foodgram_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'docs'],
+        # 'DIRS': [BASE_DIR / 'docs'],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

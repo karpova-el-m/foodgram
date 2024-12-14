@@ -99,7 +99,7 @@ sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/col
 
 ### Просмотр документации.
 
-Находясь в папке infra, выполните команду docker-compose up. По адресу http://localhost/api/docs/ расположена спецификация API.
+По адресу http://localhost/api/docs/ расположена спецификация API проекта.
 
 #### Проект разработала:
 
