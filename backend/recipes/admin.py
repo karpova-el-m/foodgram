@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.utils.html import mark_safe
 from django.core.exceptions import ValidationError
+from django import forms
 
 from .models import Recipe, RecipeIngredient
 
@@ -10,12 +11,22 @@ class RecipeIngredientInline(admin.TabularInline):
     extra = 1
 
 
+class RecipeAdminForm(forms.ModelForm):
+    class Meta:
+        model = Recipe
+        fields = '__all__'
+
+    def clean(self):
+        cleaned_data = super().clean()
+        ingredients = cleaned_data.get('ingredients')
+        if not ingredients or not ingredients.exists():
+            raise ValidationError('Нельзя создать рецепт без ингредиентов.')
+        return cleaned_data
+
+
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    def save_model(self, request, obj, form, change):
-        if not obj.ingredients.exists():
-            raise ValidationError("Нельзя создать рецепт без ингредиентов.")
-        super().save_model(request, obj, form, change)
+    form = RecipeAdminForm
     list_display = (
         'id',
         'name',
