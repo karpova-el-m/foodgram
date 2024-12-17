@@ -7,19 +7,26 @@ class ShoppingCart(models.Model):
     """Модель списка покупок для пользователя."""
     user = models.ForeignKey(
         User,
-        related_name='shopping_cart',
         on_delete=models.CASCADE,
-        verbose_name='Пользователь'
+        verbose_name='Пользователь',
+        related_name='shopping_cart'
     )
-    recipes = models.ManyToManyField(
+    recipe = models.ForeignKey(
         Recipe,
-        related_name='shopping_cart',
-        verbose_name='Рецепты'
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт',
+        related_name='shopping_cart'
     )
 
     class Meta:
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_user_recipe_combination'
+            )
+        ]
 
     def __str__(self):
-        return f'Список покупок {self.user.username}'
+        return f'{self.user.username} - {self.recipe.name}'

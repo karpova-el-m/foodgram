@@ -2,7 +2,6 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from recipes.models import Recipe
-
 from .models import Favorite
 
 
@@ -22,11 +21,19 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Favorite
-        fields = ['id', 'name', 'image', 'cooking_time']
-        read_only_fields = ['name', 'image', 'cooking_time']
+        fields = (
+            'id',
+            'name',
+            'image',
+            'cooking_time'
+        )
+        read_only_fields = (
+            'name',
+            'image',
+            'cooking_time'
+        )
 
     def create(self, validated_data):
-        """Создание записи о добавлении рецепта в избранное."""
         user = self.context['request'].user
         recipe_id = self.context['view'].kwargs.get('recipe_id')
         recipe = get_object_or_404(Recipe, id=recipe_id)

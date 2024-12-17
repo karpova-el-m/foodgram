@@ -4,15 +4,14 @@ from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from core.filters import IngredientFilter
-
 from .models import Ingredient
-from .serializers import IngredientSerializer
+from .serializers import IngredientShortSerializer
 
 
 class IngredientViewSet(ReadOnlyModelViewSet):
     """Вьюсет для модели Ingredient."""
     queryset = Ingredient.objects.all()
-    serializer_class = IngredientSerializer
+    serializer_class = IngredientShortSerializer
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_class = IngredientFilter

@@ -15,7 +15,7 @@ class FollowSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = [
+        fields = (
             'id',
             'email',
             'username',
@@ -25,17 +25,13 @@ class FollowSerializer(serializers.ModelSerializer):
             'recipes',
             'recipes_count',
             'avatar'
-        ]
+        )
 
     def get_is_subscribed(self, obj):
-        """
-        Определяет, подписан ли текущий пользователь на пользователя.
-        """
         user = self.context['request'].user
         return user.following.filter(following=obj).exists()
 
     def get_recipes(self, obj):
-        """Получает список рецептов пользователя."""
         request = self.context['request']
         try:
             recipes_limit = int(request.query_params.get('recipes_limit', 0))
@@ -53,9 +49,6 @@ class FollowSerializer(serializers.ModelSerializer):
         ).data
 
     def get_avatar(self, obj):
-        """
-        Получает полный URL для аватара пользователя.
-        """
         request = self.context['request']
         return request.build_absolute_uri(
             obj.avatar.url

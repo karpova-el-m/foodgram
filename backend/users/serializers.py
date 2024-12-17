@@ -1,23 +1,12 @@
-import base64
-
 from django.contrib.auth import get_user_model
-from django.core.files.base import ContentFile
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
 from core.constants import NON_VALID_USERNAME
+from core.fields import Base64ImageField
 from following.models import Follow
 
 User = get_user_model()
-
-
-class Base64ImageField(serializers.ImageField):
-    """Сериализатор фотографий."""
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-        return super().to_internal_value(data)
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -26,34 +15,35 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = [
+        fields = (
             'id',
             'email',
             'username',
             'first_name',
             'last_name',
             'password'
-        ]
+        )
 
-    def validate(self, data):
-        username = data.get('username').lower()
-        if username == NON_VALID_USERNAME.lower():
+    def validate_username(self, value):
+        if value.lower() == NON_VALID_USERNAME.lower():
             raise serializers.ValidationError(
                 f'Использовать имя "{NON_VALID_USERNAME}" запрещено'
             )
-        if User.objects.filter(username=data.get('username')).exists():
+        if User.objects.filter(username=value).exists():
             raise serializers.ValidationError(
                 'Пользователь с таким username уже существует'
             )
-        if User.objects.filter(email=data.get('email')).exists():
+        return value
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
             raise serializers.ValidationError(
                 'Пользователь с таким email уже существует'
             )
-        return data
+        return value
 
     def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
-        return user
+        return User.objects.create_user(**validated_data)
 
 
 class AvatarSerializer(serializers.ModelSerializer):
@@ -61,19 +51,18 @@ class AvatarSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = [
+        fields = (
             'avatar',
-        ]
+        )
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """Сериализатор объекта юзер."""
+    """Сериализатор объекта user."""
     is_subscribed = serializers.SerializerMethodField()
-    password = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
-        fields = [
+        fields = (
             'id',
             'username',
             'first_name',
@@ -81,26 +70,19 @@ class UserSerializer(serializers.ModelSerializer):
             'email',
             'avatar',
             'is_subscribed',
-            'password'
-        ]
-        extra_kwargs = {
-            'password': {'write_only': True},
-        }
+        )
 
     def get_is_subscribed(self, obj):
-        """
-        Проверяет, подписан ли текущий пользователь на данного пользователя.
-        Возвращает True, если подписан, иначе False.
-        """
         request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return Follow.objects.filter(
-                user=request.user, following=obj
+        return (
+            request and request.user.is_authenticated
+            and Follow.objects.filter(
+                user=request.user,
+                following=obj
             ).exists()
-        return False
+        )
 
     def update(self, instance, validated_data):
-        """Обновление данных пользователя (без изменения пароля)."""
         password = validated_data.pop('password', None)
         avatar = validated_data.pop('avatar', None)
         if avatar:
@@ -115,3 +97,31 @@ class UserSerializer(serializers.ModelSerializer):
             instance.set_password(password)
             instance.save()
         return instance
+
+
+class SetPasswordSerializer(serializers.Serializer):
+    """Сериализатор для смены пароля."""
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(
+        write_only=True,
+        validators=[validate_password]
+    )
+
+    def validate_current_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError('Текущий пароль неверный.')
+        return value
+
+    def validate(self, data):
+        if data['current_password'] == data['new_password']:
+            raise serializers.ValidationError(
+                'Новый пароль не должен совпадать с текущим.'
+            )
+        return data
+
+    def save(self):
+        user = self.context['request'].user
+        user.set_password(self.validated_data['new_password'])
+        user.save()
+        return user

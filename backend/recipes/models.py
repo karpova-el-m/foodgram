@@ -11,7 +11,7 @@ User = get_user_model()
 
 
 class Recipe(models.Model):
-    """Модель Recipe."""
+    """Модель Рецептов."""
     name = models.CharField(
         max_length=MAX_TITLE_LENGTH,
         verbose_name='Название'
@@ -76,6 +76,7 @@ class RecipeIngredient(models.Model):
     class Meta:
         verbose_name = 'Ингредиент рецепта'
         verbose_name_plural = 'Ингредиенты рецепта'
+        default_related_name = 'amount_ingredients'
 
     def __str__(self):
         return f'{self.recipe.name}/{self.ingredient.name}'

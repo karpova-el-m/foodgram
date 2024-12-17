@@ -13,10 +13,7 @@ class IngredientFilter(FilterSet):
         fields = ['name']
 
     def filter_name(self, queryset, name, value):
-        """
-        Кастомный фильтр для поиска по имени ингредиента.
-        Поддерживает поиск по первой букве или части названия.
-        """
+        """Кастомный фильтр для поиска по имени ингредиента."""
         if value:
             return queryset.filter(name__icontains=value)
         return queryset
@@ -44,20 +41,14 @@ class RecipeFilter(FilterSet):
         return queryset
 
     def filter_is_favorited(self, queryset, name, value):
-        """
-        Фильтрация по параметру is_favorited. Возвращает только те рецепты,
-        которые находятся в избранном у текущего пользователя.
-        """
+        """Фильтрация по параметру is_favorited."""
         user = self.request.user
         if value and user.is_authenticated:
             return queryset.filter(favorites__user=user)
         return queryset
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
-        """
-        Фильтрация по параметру is_in_shopping_cart. Возвращает только те
-        рецепты, которые находятся в списке покупок текущего пользователя.
-        """
+        """Фильтрация по параметру is_in_shopping_cart."""
         user = self.request.user
         if value and user.is_authenticated:
             return queryset.filter(shopping_cart__user=user)

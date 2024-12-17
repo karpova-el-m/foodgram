@@ -12,9 +12,8 @@ from core.paginators import CustomPagination
 from core.permissions import IsAuthorOrReadOnly
 from ingredients.models import Ingredient
 from tags.models import Tag
-
 from .models import Recipe
-from .serializers import RecipeSerializer
+from .serializers import RecipeCreateUpdateSerializer, RecipeSerializer
 
 User = get_user_model()
 
@@ -24,24 +23,27 @@ class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     permission_classes = [AllowAny]
-    http_method_names = ['get', 'post', 'put', 'patch', 'delete']
+    http_method_names = ['get', 'post', 'patch', 'delete']
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     pagination_class = CustomPagination
 
     def get_permissions(self):
-        """Задает разрешения для разных методов."""
         if self.action in ['destroy', 'partial_update']:
             return [IsAuthorOrReadOnly()]
         elif self.action in ['create']:
             return [IsAuthenticated()]
         return super().get_permissions()
 
+    def get_serializer_class(self):
+        if self.action in ['create', 'partial_update']:
+            return RecipeCreateUpdateSerializer
+        return RecipeSerializer
+
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
     def validate_ingredients(self, ingredients):
-        """Проверяет ингредиенты на уникальность и корректность."""
         ingredient_ids = [item['id'] for item in ingredients]
         if len(ingredient_ids) != len(set(ingredient_ids)):
             raise serializers.ValidationError(
@@ -66,7 +68,6 @@ class RecipeViewSet(ModelViewSet):
             )
 
     def validate_tags(self, tags):
-        """Проверяет теги на уникальность и существование в базе данных."""
         if len(tags) != len(set(tags)):
             raise serializers.ValidationError(
                 'Теги не могут повторяться.'
@@ -87,10 +88,10 @@ class RecipeViewSet(ModelViewSet):
         self.validate_tags(request.data.get('tags', []))
         return super().create(request, *args, **kwargs)
 
-    def perform_update(self, serializer):
-        self.validate_ingredients(self.request.data.get('ingredients', []))
-        self.validate_tags(self.request.data.get('tags', []))
-        serializer.save()
+    def partial_update(self, request, *args, **kwargs):
+        self.validate_ingredients(request.data.get('ingredients', []))
+        self.validate_tags(request.data.get('tags', []))
+        return super().partial_update(request, *args, **kwargs)
 
     @action(
         detail=True,
@@ -98,9 +99,8 @@ class RecipeViewSet(ModelViewSet):
         url_path='get-link'
     )
     def get_short_link(self, request, pk=None):
-        """Возвращает короткую ссылку на рецепт."""
         base_url = getattr(settings, 'BASE_URL')
-        short_link = f"{base_url}/{pk}/"
+        short_link = f'{base_url}/{pk}/'
         return Response(
             {'short-link': short_link},
             status=status.HTTP_200_OK

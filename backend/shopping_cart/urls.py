@@ -5,9 +5,9 @@ from .views import ShoppingCartViewSet
 
 app_name = 'shopping_cart'
 
-router_v1 = routers.DefaultRouter()
-router_v1.register(r'recipes', ShoppingCartViewSet, basename='shopping_cart')
+router = routers.DefaultRouter()
+router.register(r'recipes', ShoppingCartViewSet, basename='shopping_cart')
 
 urlpatterns = [
-    path('', include(router_v1.urls)),
+    path('', include(router.urls)),
 ]

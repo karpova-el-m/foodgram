@@ -1,69 +1,69 @@
-import os
-
-from django.conf import settings
-from django.http import HttpResponse
+from django.db.models import Sum
 from django.shortcuts import get_object_or_404
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfgen import canvas
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.mixins import CreateModelMixin, DestroyModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import GenericViewSet
 
-from recipes.models import Recipe
-
+from core.utils import generate_shopping_cart_pdf
+from recipes.models import Recipe, RecipeIngredient
 from .models import ShoppingCart
 from .serializers import ShoppingCartSerializer
 
 
-class ShoppingCartViewSet(ModelViewSet):
+class ShoppingCartViewSet(CreateModelMixin, DestroyModelMixin, GenericViewSet):
     """Вьюсет для работы со списком покупок."""
     serializer_class = ShoppingCartSerializer
 
     @action(
         detail=True,
-        methods=['post', 'delete'],
+        methods=['post'],
         permission_classes=(IsAuthenticated,),
         url_path='shopping_cart'
     )
-    def shopping_cart(self, request, pk=None):
-        """Добавление и удаление рецепта из списка покупок."""
+    def add_to_shopping_cart(self, request, pk=None):
         user = request.user
-        shopping_cart, created = ShoppingCart.objects.get_or_create(user=user)
         recipe = get_object_or_404(Recipe, pk=pk)
-        if request.method == 'POST':
-            if shopping_cart.recipes.filter(id=recipe.id).exists():
-                return Response(
-                    {'detail': 'Рецепт уже в списке покупок.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            shopping_cart.recipes.add(recipe)
-            serializer = self.get_serializer(shopping_cart)
+        _, created = ShoppingCart.objects.get_or_create(
+            user=user,
+            recipe=recipe
+        )
+        if not created:
             return Response(
-                {
-                    "id": recipe.id,
-                    "name": recipe.name,
-                    "image": request.build_absolute_uri(recipe.image.url),
-                    "cooking_time": recipe.cooking_time
-                },
-                status=status.HTTP_201_CREATED
+                {'detail': 'Рецепт уже в списке покупок.'},
+                status=status.HTTP_400_BAD_REQUEST
             )
-        elif request.method == 'DELETE':
-            if not shopping_cart.recipes.filter(id=recipe.id).exists():
-                return Response(
-                    {'detail': 'Рецепт не найден в списке покупок.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            shopping_cart.recipes.remove(recipe)
-            serializer = self.get_serializer(shopping_cart)
+        return Response(
+            {
+                'id': recipe.id,
+                'name': recipe.name,
+                'image': request.build_absolute_uri(recipe.image.url),
+                'cooking_time': recipe.cooking_time
+            },
+            status=status.HTTP_201_CREATED
+        )
+
+    @add_to_shopping_cart.mapping.delete
+    def remove_from_shopping_cart(self, request, pk=None):
+        user = request.user
+        recipe = get_object_or_404(Recipe, pk=pk)
+        shopping_cart_item = ShoppingCart.objects.filter(
+            user=user,
+            recipe=recipe
+        ).first()
+        if not shopping_cart_item:
             return Response(
-                serializer.data,
-                status=status.HTTP_204_NO_CONTENT
+                {'detail': 'Рецепт не найден в списке покупок.'},
+                status=status.HTTP_400_BAD_REQUEST
             )
+        shopping_cart_item.delete()
+        return Response(
+            {'detail': 'Рецепт успешно удален из списка покупок.'},
+            status=status.HTTP_204_NO_CONTENT
+        )
 
 
 class DownloadShoppingCartView(APIView):
@@ -74,53 +74,15 @@ class DownloadShoppingCartView(APIView):
         """Скачать список покупок."""
         user = request.user
         shopping_cart = ShoppingCart.objects.filter(user=user).first()
-        if not shopping_cart or not shopping_cart.recipes.exists():
+        if not shopping_cart:
             return Response(
                 {'detail': 'Список покупок пуст.'},
                 status=200
             )
-        ingredients_summary = {}
-        for recipe in shopping_cart.recipes.all():
-            for ingredient_data in recipe.recipeingredient_set.all():
-                ingredient = ingredient_data.ingredient
-                ingredient_id = ingredient.id
-                if ingredient_id in ingredients_summary:
-                    ingredients_summary[ingredient_id][
-                        'amount'
-                    ] += ingredient_data.amount
-                else:
-                    ingredients_summary[ingredient_id] = {
-                        'name': ingredient.name,
-                        'measurement_unit': ingredient.measurement_unit,
-                        'amount': ingredient_data.amount
-                    }
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = (
-            'attachment; filename="shopping_cart.pdf"'
+        ingredients_summary = (
+            RecipeIngredient.objects
+            .filter(recipe__shopping_cart__user=user)
+            .values('ingredient__name', 'ingredient__measurement_unit')
+            .annotate(total_amount=Sum('amount'))
         )
-        FONT_PATH = os.path.join(
-            settings.BASE_DIR,
-            'fonts',
-            'Stamps.ttf'
-        )
-        pdfmetrics.registerFont(TTFont('Stamps', FONT_PATH))
-        pdf_canvas = canvas.Canvas(response, pagesize=A4)
-        pdf_canvas.setFont('Stamps', 12)
-        width, height = A4
-        pdf_canvas.drawString(
-            50, height - 50,
-            f'Список покупок для {user.username}'
-        )
-        y_position = height - 100
-        for ingr in ingredients_summary.values():
-            line = (
-                f"{ingr['name']} - {ingr['amount']} {ingr['measurement_unit']}"
-            )
-            pdf_canvas.drawString(50, y_position, line)
-            y_position -= 20
-            if y_position < 50:
-                pdf_canvas.showPage()
-                pdf_canvas.setFont('Stamps', 12)
-                y_position = height - 50
-        pdf_canvas.save()
-        return response
+        return generate_shopping_cart_pdf(user, ingredients_summary)

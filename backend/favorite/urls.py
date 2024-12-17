@@ -5,9 +5,9 @@ from .views import FavoriteViewSet
 
 app_name = 'favorite'
 
-router_v1 = routers.DefaultRouter()
-router_v1.register(r'recipes', FavoriteViewSet, basename='favorite')
+router = routers.DefaultRouter()
+router.register(r'recipes', FavoriteViewSet, basename='favorite')
 
 urlpatterns = [
-    path('', include(router_v1.urls)),
+    path('', include(router.urls)),
 ]

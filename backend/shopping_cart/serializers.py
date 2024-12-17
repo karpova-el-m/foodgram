@@ -19,14 +19,9 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ShoppingCart
-        fields = ['id', 'name', 'image', 'cooking_time']
-
-    def create(self, validated_data):
-        shopping_cart = ShoppingCart.objects.create(**validated_data)
-        return shopping_cart
-
-    def update(self, instance, validated_data):
-        recipes = validated_data.get('recipes', instance.recipes.all())
-        instance.recipes.set(recipes)
-        instance.save()
-        return instance
+        fields = (
+            'id',
+            'name',
+            'image',
+            'cooking_time'
+        )

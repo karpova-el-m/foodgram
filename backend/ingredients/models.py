@@ -4,7 +4,7 @@ from core.constants import MAX_LENGTH, MEASUREMENT_UNIT_CHOICES
 
 
 class Ingredient(models.Model):
-    """Модель Ingredient."""
+    """Модель Ингредиентов."""
     name = models.CharField(
         verbose_name='Название ингредиента',
         unique=True,
@@ -19,6 +19,12 @@ class Ingredient(models.Model):
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'measurement_unit'],
+                name='unique_ingredient_combination'
+            )
+        ]
 
     def __str__(self):
-        return self.name
+        return f'{self.name}, {self.measurement_unit}'

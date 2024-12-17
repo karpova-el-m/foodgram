@@ -6,7 +6,7 @@ User = get_user_model()
 
 
 class Follow(models.Model):
-    """Модель Follow."""
+    """Модель Подписок."""
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,

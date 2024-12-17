@@ -5,11 +5,10 @@ from .views import UserViewSet
 
 app_name = 'users'
 
-router_v1 = routers.DefaultRouter()
-router_v1.register(r'users', UserViewSet, basename='users')
+router = routers.DefaultRouter()
+router.register(r'users', UserViewSet, basename='users')
 
 urlpatterns = [
-    path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.authtoken')),
-    path('', include(router_v1.urls)),
+    path('', include(router.urls)),
 ]

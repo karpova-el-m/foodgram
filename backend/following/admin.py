@@ -8,7 +8,8 @@ class FollowAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'user',
-        'following')
+        'following'
+    )
     search_fields = (
         'user__username',
         'user__email',

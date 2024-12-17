@@ -5,9 +5,9 @@ from .views import TagsViewSet
 
 app_name = 'tags'
 
-router_v1 = routers.DefaultRouter()
-router_v1.register(r'tags', TagsViewSet, basename='tags')
+router = routers.DefaultRouter()
+router.register(r'tags', TagsViewSet, basename='tags')
 
 urlpatterns = [
-    path('', include(router_v1.urls)),
+    path('', include(router.urls)),
 ]
