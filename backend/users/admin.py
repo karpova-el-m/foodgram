@@ -71,6 +71,6 @@ class CustomUserAdmin(UserAdmin):
                 f'<img src="{obj.avatar.url}" width="50" height="50" />'
             )
         return mark_safe(
-            '<img src="/images/default_avatar.jpg" width="50" height="50" '
+            '<img src="/media/default_avatar.jpg" width="50" height="50" '
             'style="border-radius: 50%;" />'
         )
