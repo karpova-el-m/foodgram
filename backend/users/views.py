@@ -9,7 +9,7 @@ from core.mixins import UpdateModelMixin
 from core.paginators import CustomPagination
 from core.permissions import IsAuthorOrReadOnly
 from following.models import Follow
-from following.serializers import FollowSerializer
+from following.serializers import FollowSerializer, FollowCreateSerializer
 from .serializers import (AvatarSerializer, SetPasswordSerializer,
                           UserRegistrationSerializer, UserSerializer)
 
@@ -28,18 +28,12 @@ class UserViewSet(
     serializer_class = UserSerializer
     search_fields = ('username',)
     pagination_class = CustomPagination
-    http_method_names = ['get', 'post', 'patch', 'put', 'delete']
+    http_method_names = ('get', 'post', 'patch', 'put', 'delete')
 
     def get_permissions(self):
         if self.action in ('list', 'retrieve', 'create'):
             return [AllowAny()]
         return [IsAuthenticated()]
-
-    def get_user_serializer(self, user):
-        return UserSerializer(user, context={'request': self.request})
-
-    def get_follow_serializer(self, user, data=None, partial=False):
-        return FollowSerializer(user, context={'request': self.request})
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -53,7 +47,10 @@ class UserViewSet(
         permission_classes=(IsAuthorOrReadOnly,)
     )
     def retrieve_profile(self, request):
-        serializer = self.get_user_serializer(request.user)
+        serializer = UserSerializer(
+            request.user,
+            context={'request': self.request}
+        )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(
@@ -107,36 +104,30 @@ class UserViewSet(
     )
     def subscribe(self, request, pk=None):
         user_to_follow = get_object_or_404(User, pk=pk)
-        if user_to_follow == request.user:
-            return Response(
-                {'detail': 'Вы не можете подписаться на самого себя.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        if Follow.objects.filter(
-            user=request.user,
-            following=user_to_follow
-        ).exists():
-            return Response(
-                {'detail': 'Вы уже подписаны на этого пользователя.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        Follow.objects.create(user=request.user, following=user_to_follow)
-        serializer = self.get_follow_serializer(user_to_follow)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        serializer = FollowCreateSerializer(
+            data={'following': user_to_follow.id},
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        follow_serializer = FollowSerializer(
+            user_to_follow,
+            context={'request': request}
+        )
+        return Response(follow_serializer.data, status=status.HTTP_201_CREATED)
 
     @subscribe.mapping.delete
     def unsubscribe(self, request, pk=None):
         user_to_follow = get_object_or_404(User, pk=pk)
-        follow_instance = Follow.objects.filter(
-            user=request.user,
+        follow = request.user.following.filter(
             following=user_to_follow
-        ).first()
-        if not follow_instance:
+        )
+        if not follow.exists():
             return Response(
                 {'detail': 'Вы не подписаны на этого пользователя.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        follow_instance.delete()
+        follow.delete()
         return Response(
             {'detail': 'Вы отписались от пользователя.'},
             status=status.HTTP_204_NO_CONTENT,

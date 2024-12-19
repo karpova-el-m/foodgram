@@ -10,9 +10,6 @@ from core.constants import USER_NAME_REGEX
 class CustomUsernameValidator(UnicodeUsernameValidator):
     """Кастомный валидатор для имени пользователя."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def __call__(self, value):
         if re.search(r'\bme\b', value, re.IGNORECASE):
             raise ValidationError(

@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.utils.html import mark_safe
+from django.db.models import Count
 
 from .models import Recipe, RecipeIngredient
 
@@ -17,6 +18,7 @@ class RecipeAdmin(admin.ModelAdmin):
         'name',
         'author',
         'get_recipe_image',
+        'favorite_amount',
     )
     list_filter = (
         'tags',
@@ -37,3 +39,11 @@ class RecipeAdmin(admin.ModelAdmin):
                 f'<img src="{obj.image.url}" width="50" height="50" />'
             )
         return None
+
+    @admin.display(description='Добавлено в избранное')
+    def favorite_amount(self, obj):
+        return obj.favorite_amount
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset.annotate(favorite_amount=Count('favorites'))

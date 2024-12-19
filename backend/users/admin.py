@@ -1,9 +1,18 @@
+import os
+
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
 from django.utils.html import mark_safe
+from django.conf import settings
 
 User = get_user_model()
+
+DEFAULT_AVATAR_PATH = os.path.join(
+    settings.BASE_DIR,
+    'images',
+    'defolt_avatar.jpg'
+)
 
 
 @admin.register(User)
@@ -61,4 +70,7 @@ class CustomUserAdmin(UserAdmin):
             return mark_safe(
                 f'<img src="{obj.avatar.url}" width="50" height="50" />'
             )
-        return None
+        return mark_safe(
+            '<img src="/images/default_avatar.jpg" width="50" height="50" '
+            'style="border-radius: 50%;" />'
+        )

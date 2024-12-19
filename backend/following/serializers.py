@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from recipes.serializers import RecipeShortSerializer
+from .models import Follow
 
 User = get_user_model()
 
@@ -53,3 +54,27 @@ class FollowSerializer(serializers.ModelSerializer):
         return request.build_absolute_uri(
             obj.avatar.url
         ) if obj.avatar else None
+
+
+class FollowCreateSerializer(serializers.Serializer):
+    """Сериализатор для создания подписки."""
+    following = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all()
+    )
+
+    def validate_following(self, value):
+        user = self.context['request'].user
+        if value == user:
+            raise serializers.ValidationError(
+                'Вы не можете подписаться на самого себя.'
+            )
+        if user.following.filter(following=value).exists():
+            raise serializers.ValidationError(
+                'Вы уже подписаны на этого пользователя.'
+            )
+        return value
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        following = validated_data['following']
+        return Follow.objects.create(user=user, following=following)

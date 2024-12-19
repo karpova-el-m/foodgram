@@ -33,12 +33,16 @@ class FavoriteSerializer(serializers.ModelSerializer):
             'cooking_time'
         )
 
+    def validate(self, attrs):
+        user = self.context['request'].user
+        recipe_id = self.context['view'].kwargs.get('pk')
+        recipe = get_object_or_404(Recipe, id=recipe_id)
+        if recipe.favorites.filter(user=user).exists():
+            raise serializers.ValidationError('Этот рецепт уже в избранном.')
+        return attrs
+
     def create(self, validated_data):
         user = self.context['request'].user
-        recipe_id = self.context['view'].kwargs.get('recipe_id')
+        recipe_id = self.context['view'].kwargs.get('pk')
         recipe = get_object_or_404(Recipe, id=recipe_id)
-        if not Recipe.objects.filter(id=recipe.id).exists():
-            raise serializers.ValidationError('Рецепт не найден.')
-        if Favorite.objects.filter(user=user, recipe=recipe).exists():
-            raise serializers.ValidationError('Этот рецепт уже в избранном.')
         return Favorite.objects.create(user=user, recipe=recipe)

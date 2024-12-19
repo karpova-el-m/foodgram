@@ -1,56 +1,45 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.mixins import CreateModelMixin, DestroyModelMixin
+from rest_framework.mixins import ListModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from recipes.models import Recipe
 from .models import Favorite
+from .serializers import FavoriteSerializer
 
 
-class FavoriteViewSet(CreateModelMixin, DestroyModelMixin, GenericViewSet):
+class FavoriteViewSet(ListModelMixin, GenericViewSet):
     """Вьюсет для работы с избранными рецептами."""
+    queryset = Favorite.objects.all()
+    serializer_class = FavoriteSerializer
+    permission_classes = (IsAuthenticated,)
 
     @action(
         detail=True,
         methods=['post'],
-        permission_classes=(IsAuthenticated,),
         url_path='favorite'
     )
     def add_to_favorite(self, request, pk=None):
-        recipe = get_object_or_404(Recipe, pk=pk)
-        if Favorite.objects.filter(user=request.user, recipe=recipe).exists():
-            return Response(
-                {'detail': 'Рецепт уже добавлен в избранное.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        Favorite.objects.create(user=request.user, recipe=recipe)
-        return Response(
-            {
-                'id': recipe.id,
-                'name': recipe.name,
-                'image': request.build_absolute_uri(recipe.image.url),
-                'cooking_time': recipe.cooking_time,
-            },
-            status=status.HTTP_201_CREATED
-        )
+        context = {'request': request, 'view': self, 'pk': pk}
+        serializer = self.get_serializer(data={}, context=context)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @add_to_favorite.mapping.delete
     def remove_from_favorite(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
-        favorite = Favorite.objects.filter(
-            user=request.user,
-            recipe=recipe
-        ).first()
-        if not favorite:
+        favorite = recipe.favorites.filter(user=request.user)
+        if not favorite.exists():
             return Response(
                 {'detail': 'Рецепт не найден в избранном.'},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
         favorite.delete()
         return Response(
             {'detail': 'Рецепт удален из избранного.'},
-            status=status.HTTP_204_NO_CONTENT
+            status=status.HTTP_204_NO_CONTENT,
         )
