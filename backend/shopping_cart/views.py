@@ -6,8 +6,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
+from django.http import HttpResponse
 
-from core.utils import generate_shopping_cart_pdf
+from core.utils import ShoppingCartPDFGenerator
 from recipes.models import Recipe, RecipeIngredient
 from .models import ShoppingCart
 from .serializers import ShoppingCartSerializer, RecipeShoppingCartSerializer
@@ -73,4 +74,14 @@ class DownloadShoppingCartView(APIView):
             .values('ingredient__name', 'ingredient__measurement_unit')
             .annotate(total_amount=Sum('amount'))
         )
-        return generate_shopping_cart_pdf(request.user, ingredients_summary)
+        # return generate_shopping_cart_pdf(request.user, ingredients_summary)
+        pdf_generator = ShoppingCartPDFGenerator(
+            request.user,
+            ingredients_summary
+        )
+        pdf_data = pdf_generator.generate()
+        response = HttpResponse(pdf_data, content_type='application/pdf')
+        response['Content-Disposition'] = (
+            'attachment; filename="shopping_cart.pdf"'
+        )
+        return response

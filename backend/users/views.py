@@ -28,7 +28,6 @@ class UserViewSet(
     serializer_class = UserSerializer
     search_fields = ('username',)
     pagination_class = CustomPagination
-    http_method_names = ('get', 'post', 'patch', 'put', 'delete')
 
     def get_permissions(self):
         if self.action in ('list', 'retrieve', 'create'):
