@@ -20,16 +20,16 @@ class RecipeViewSet(ModelViewSet):
     """Вьюсет для модели Recipe."""
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    permission_classes = [AllowAny]
+    permission_classes = (AllowAny,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     pagination_class = CustomPagination
 
     def get_permissions(self):
         if self.action in ['destroy', 'partial_update']:
-            return [IsAuthorOrReadOnly()]
+            return (IsAuthorOrReadOnly(),)
         elif self.action in ['create']:
-            return [IsAuthenticated()]
+            return (IsAuthenticated(),)
         return super().get_permissions()
 
     def get_serializer_class(self):

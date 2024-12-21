@@ -1,11 +1,9 @@
 from django.db.models import Sum
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import GenericViewSet
 from django.http import HttpResponse
 
 from core.utils import ShoppingCartPDFGenerator
@@ -14,26 +12,22 @@ from .models import ShoppingCart
 from .serializers import ShoppingCartSerializer, RecipeShoppingCartSerializer
 
 
-class ShoppingCartViewSet(GenericViewSet):
-    """Вьюсет для работы со списком покупок."""
-    serializer_class = ShoppingCartSerializer
+class ShoppingCartView(APIView):
+    """APIView для работы со списком покупок."""
+    permission_classes = (IsAuthenticated,)
 
-    @action(
-        detail=True,
-        methods=['post'],
-        permission_classes=(IsAuthenticated,),
-        url_path='shopping_cart'
-    )
-    def add_to_shopping_cart(self, request, pk=None):
-        recipe = get_object_or_404(Recipe, pk=pk)
-        serializer = self.get_serializer(
+    def post(self, request, pk=None):
+        serializer = ShoppingCartSerializer(
             data=request.data,
-            context={'request': request, 'recipe': recipe}
+            context={
+                'request': request,
+                'recipe': get_object_or_404(Recipe, pk=pk)
+            }
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
         response_serializer = RecipeShoppingCartSerializer(
-            recipe,
+            get_object_or_404(Recipe, pk=pk),
             context={'request': request}
         )
         return Response(
@@ -41,10 +35,10 @@ class ShoppingCartViewSet(GenericViewSet):
             status=status.HTTP_201_CREATED
         )
 
-    @add_to_shopping_cart.mapping.delete
-    def remove_from_shopping_cart(self, request, pk=None):
-        recipe = get_object_or_404(Recipe, pk=pk)
-        shopping_cart = recipe.shopping_cart.filter(user=request.user)
+    def delete(self, request, pk=None):
+        shopping_cart = get_object_or_404(Recipe, pk=pk).shopping_cart.filter(
+            user=request.user
+        )
         if not shopping_cart.exists():
             return Response(
                 {'detail': 'Рецепт не найден в списке покупок.'},
@@ -59,7 +53,7 @@ class ShoppingCartViewSet(GenericViewSet):
 
 class DownloadShoppingCartView(APIView):
     """APIView для скачивания списка покупок."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated,)
 
     def get(self, request):
         """Скачать список покупок."""
@@ -74,7 +68,6 @@ class DownloadShoppingCartView(APIView):
             .values('ingredient__name', 'ingredient__measurement_unit')
             .annotate(total_amount=Sum('amount'))
         )
-        # return generate_shopping_cart_pdf(request.user, ingredients_summary)
         pdf_generator = ShoppingCartPDFGenerator(
             request.user,
             ingredients_summary

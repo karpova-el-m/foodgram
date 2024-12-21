@@ -8,7 +8,6 @@ from rest_framework.response import Response
 from core.mixins import UpdateModelMixin
 from core.paginators import CustomPagination
 from core.permissions import IsAuthorOrReadOnly
-from following.models import Follow
 from following.serializers import FollowSerializer, FollowCreateSerializer
 from .serializers import (AvatarSerializer, SetPasswordSerializer,
                           UserRegistrationSerializer, UserSerializer)
@@ -29,10 +28,15 @@ class UserViewSet(
     search_fields = ('username',)
     pagination_class = CustomPagination
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
     def get_permissions(self):
         if self.action in ('list', 'retrieve', 'create'):
-            return [AllowAny()]
-        return [IsAuthenticated()]
+            return (AllowAny(),)
+        return (IsAuthenticated(),)
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -46,10 +50,7 @@ class UserViewSet(
         permission_classes=(IsAuthorOrReadOnly,)
     )
     def retrieve_profile(self, request):
-        serializer = UserSerializer(
-            request.user,
-            context={'request': self.request}
-        )
+        serializer = self.get_serializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(
@@ -102,24 +103,21 @@ class UserViewSet(
         url_path='subscribe'
     )
     def subscribe(self, request, pk=None):
-        user_to_follow = get_object_or_404(User, pk=pk)
         serializer = FollowCreateSerializer(
-            data={'following': user_to_follow.id},
+            data={'following': get_object_or_404(User, pk=pk).id},
             context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        follow_serializer = FollowSerializer(
-            user_to_follow,
-            context={'request': request}
+        return Response(
+            serializer.to_representation(serializer.instance),
+            status=status.HTTP_201_CREATED
         )
-        return Response(follow_serializer.data, status=status.HTTP_201_CREATED)
 
     @subscribe.mapping.delete
     def unsubscribe(self, request, pk=None):
-        user_to_follow = get_object_or_404(User, pk=pk)
         follow = request.user.following.filter(
-            following=user_to_follow
+            following=get_object_or_404(User, pk=pk)
         )
         if not follow.exists():
             return Response(
@@ -139,21 +137,15 @@ class UserViewSet(
         url_path='subscriptions'
     )
     def subscriptions(self, request):
-        subscriptions = Follow.objects.filter(
-            user=request.user
-        ).select_related('following')
+        subscriptions = request.user.following.all()
         followed_users = [follow.following for follow in subscriptions]
         page = self.paginate_queryset(followed_users)
-        if page is not None:
-            serializer = FollowSerializer(
-                page,
-                many=True,
-                context={'request': request}
-            )
-            return self.get_paginated_response(serializer.data)
         serializer = FollowSerializer(
-            followed_users,
+            page if page is not None else followed_users,
             many=True,
             context={'request': request}
         )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return (
+            self.get_paginated_response(serializer.data) if page is not None
+            else Response(serializer.data, status=status.HTTP_200_OK)
+        )

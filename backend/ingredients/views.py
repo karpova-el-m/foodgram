@@ -12,6 +12,6 @@ class IngredientViewSet(ReadOnlyModelViewSet):
     """Вьюсет для модели Ingredient."""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientShortSerializer
-    permission_classes = [AllowAny]
+    permission_classes = (AllowAny,)
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_class = IngredientFilter

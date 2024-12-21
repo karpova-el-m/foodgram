@@ -68,7 +68,8 @@ class CustomUserAdmin(UserAdmin):
     def avatar_preview(self, obj):
         if obj.avatar:
             return mark_safe(
-                f'<img src="{obj.avatar.url}" width="50" height="50" />'
+                f'<img src="{obj.avatar.url}" width="50" height="50" '
+                'style="border-radius: 50%;" />'
             )
         return mark_safe(
             '<img src="/media/default_avatar.jpg" width="50" height="50" '

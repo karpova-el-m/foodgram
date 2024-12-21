@@ -75,6 +75,14 @@ class FollowCreateSerializer(serializers.Serializer):
         return value
 
     def create(self, validated_data):
-        user = self.context['request'].user
         following = validated_data['following']
-        return Follow.objects.create(user=user, following=following)
+        return Follow.objects.create(
+            user=self.context['request'].user,
+            following=following
+        )
+
+    def to_representation(self, instance):
+        return FollowSerializer(
+            instance.following,
+            context=self.context
+        ).data

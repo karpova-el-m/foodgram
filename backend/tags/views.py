@@ -9,4 +9,4 @@ class TagsViewSet(ReadOnlyModelViewSet):
     """Вьюсет для модели Tag."""
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = [AllowAny]
+    permission_classes = (AllowAny,)

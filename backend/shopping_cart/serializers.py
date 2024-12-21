@@ -28,18 +28,20 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        user = self.context['request'].user
         recipe = self.context['recipe']
-        if recipe.shopping_cart.filter(user=user).exists():
+        if recipe.shopping_cart.filter(
+            user=self.context['request'].user
+        ).exists():
             raise serializers.ValidationError(
                 {'detail': 'Рецепт уже в списке покупок.'}
             )
         return data
 
     def create(self, validated_data):
-        user = self.context['request'].user
-        recipe = self.context['recipe']
-        shopping_cart = ShoppingCart.objects.create(user=user, recipe=recipe)
+        shopping_cart = ShoppingCart.objects.create(
+            user=self.context['request'].user,
+            recipe=self.context['recipe']
+        )
         return shopping_cart
 
 

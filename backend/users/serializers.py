@@ -4,7 +4,6 @@ from rest_framework import serializers
 
 from core.constants import NON_VALID_USERNAME
 from core.fields import Base64ImageField
-from following.models import Follow
 
 User = get_user_model()
 
@@ -76,11 +75,8 @@ class UserSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         return (
             request and request.user.is_authenticated
-            and Follow.objects.filter(
-                user=request.user,
-                following=obj
-            ).exists()
-        )
+            and request.user.following.filter(following=obj).exists()
+        ) if request and request.user.is_authenticated else False
 
     def update(self, instance, validated_data):
         password = validated_data.pop('password', None)

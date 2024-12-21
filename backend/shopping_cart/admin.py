@@ -27,6 +27,7 @@ class ShoppingCartAdmin(admin.ModelAdmin):
     def get_recipe_image(self, obj):
         if obj.recipe.image:
             return mark_safe(
-                f'<img src="{obj.recipe.image.url}" width="50" height="50" />'
+                f'<img src="{obj.recipe.image.url}" width="50" height="50" '
+                'style="border-radius: 50%;" />'
             )
         return None

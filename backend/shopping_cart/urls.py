@@ -1,13 +1,18 @@
-from django.urls import include, path
-from rest_framework import routers
+from django.urls import path
 
-from .views import ShoppingCartViewSet
+from .views import ShoppingCartView
 
 app_name = 'shopping_cart'
 
-router = routers.DefaultRouter()
-router.register(r'recipes', ShoppingCartViewSet, basename='shopping_cart')
-
 urlpatterns = [
-    path('', include(router.urls)),
+    path(
+        'recipes/<int:pk>/shopping_cart/',
+        ShoppingCartView.as_view(),
+        name='add_to_shopping_cart'
+    ),
+    path(
+        'recipes/<int:pk>/shopping_cart/remove/',
+        ShoppingCartView.as_view(),
+        name='remove_from_shopping_cart'
+    ),
 ]

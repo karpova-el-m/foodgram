@@ -17,14 +17,22 @@ class FavoriteViewSet(ListModelMixin, GenericViewSet):
     serializer_class = FavoriteSerializer
     permission_classes = (IsAuthenticated,)
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({
+            'request': self.request,
+            'view': self,
+            'pk': self.kwargs.get('pk')
+        })
+        return context
+
     @action(
         detail=True,
         methods=['post'],
         url_path='favorite'
     )
     def add_to_favorite(self, request, pk=None):
-        context = {'request': request, 'view': self, 'pk': pk}
-        serializer = self.get_serializer(data={}, context=context)
+        serializer = self.get_serializer(data={})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
